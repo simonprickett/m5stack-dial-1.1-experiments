@@ -11,7 +11,7 @@
 These instructions have been tested on macOS 15.5.
 
 1. Install the [Arduino IDE](https://www.arduino.cc/en/software/).
-1. Follow the M5Stack tutorial [here](https://docs.m5stack.com/en/arduino/m5dial/program) to get a demo C program compiling and running on the device in your local environment.  Note that this guide refers to other guides for setting up boards and installing libraries in your environment - be sure to follow those too!  This guide also talks about selecting "Preferences" from the "File" menu in ArduinoIDE.  On macOS, select "AruinoIDE" then "Settings" instead.
+1. Follow the M5Stack tutorial [here](https://docs.m5stack.com/en/arduino/m5dial/program) to get a demo C program compiling and running on the device in your local environment.  Note that this guide refers to other guides for setting up boards and installing libraries in your environment - be sure to follow those too!  This guide also talks about selecting "Preferences" from the "File" menu in ArduinoIDE.  On macOS, select "ArduinoIDE" then "Settings" instead.
 1. Continue onwards once you have the M5Stack test "display" program running on your device.
 
 ## Resources
