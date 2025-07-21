@@ -18,3 +18,5 @@ These instructions have been tested on macOS 15.5.
 
 * [M5Stack Dial 1.1 documentation](https://docs.m5stack.com/en/core/M5Dial%20V1.1).
 * [Arduino IDE setup / tutorial](https://docs.m5stack.com/en/arduino/m5dial/program).
+* [M5Stack Dial library on GitHub](https://github.com/m5stack/M5Dial).
+* [Source code for the factory installed M5Stack Dial demo app](https://github.com/m5stack/M5Dial-UserDemo).
