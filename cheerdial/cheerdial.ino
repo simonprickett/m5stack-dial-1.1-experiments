@@ -27,7 +27,7 @@ const struct CHEERLIGHT cheerlights[] = {
 M5GFX display;
 M5Canvas canvas(&display);
 
-short idx = 0;
+short idx = -1;
 long oldPosition = -999;
 
 void setup() {
@@ -43,11 +43,21 @@ void setup() {
 void loop() {
     M5Dial.update();
     
+    // This will initially return 0.
     long newPosition = M5Dial.Encoder.read();
     if (abs(newPosition - oldPosition) >= ENCODER_SENSITIVITY) {
-        Serial.println(abs(newPosition - oldPosition));
-        // Position has changed! 
+        // Encoder position has changed! 
+        idx = (newPosition > oldPosition ? idx + 1 : idx - 1);
+
+        // Update the array index, deal with roll arounds.
+        if (idx < 0) {
+            idx = NUM_COLORS - 1;
+        } else if (idx == NUM_COLORS) {
+            idx = 0;
+        }
+        
         M5Dial.Speaker.tone(8000, 20);
+        
         display.clear();
         display.startWrite();
         canvas.createSprite(M5Dial.Display.width(), M5Dial.Display.height());
@@ -60,28 +70,15 @@ void loop() {
         canvas.pushSprite(0, 0);
         display.endWrite();
 
-        // What are the bounds of newPosition?
         // Sort out the save location here... in cheerdial folder.
-    
-        Serial.println(idx);
-
-        // TODO this will need fixing so it starts on idx 0.
-        // TODO also needs fixing for both directions.
-        idx++;
-        if (idx < 0) {
-            idx = NUM_COLORS;
-        }
-
-        if (idx == NUM_COLORS) {
-            idx = 0;
-        }
-        
-        oldPosition = newPosition;
+            
+        // Reset the encoder value.
+        M5Dial.Encoder.write(0);
+        oldPosition = 0;
     }
 
     if (M5Dial.BtnA.wasClicked()) {
+        // TODO something with the button being pressed...
         Serial.println("A btn clicked.");
     }
-
-    // TODO something with the button being pressed...
 }
