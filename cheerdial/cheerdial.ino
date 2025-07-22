@@ -55,7 +55,7 @@ void loop() {
         canvas.setTextColor(M5Dial.Display.color888(0, 0, 0));
         canvas.setTextDatum(middle_center);
         canvas.setFont(&fonts::Orbitron_Light_32);
-        canvas.setTextSize(1);
+        canvas.setTextSize(1.5);
         canvas.drawString(cheerlights[idx].colorName, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
         canvas.pushSprite(0, 0);
         display.endWrite();
