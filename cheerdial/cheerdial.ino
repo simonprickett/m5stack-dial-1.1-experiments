@@ -1,22 +1,21 @@
 #include "M5Dial.h"
 
-short NUM_COLORS = 11;
-long oldPosition = -999;
+const short NUM_COLORS = 11;
+const short ENCODER_SENSITIVITY = 5; // Lower = less turning required.
 
 struct CHEERLIGHT {
     int r;
     int g;
     int b;
     char *colorName;
-    // TODO add text color stuff.
 };
 
-struct CHEERLIGHT cheerlights[] = {
-    { 255, 0, 0, "red" },       // OK
-    { 0, 255, 0, "green" },     // OK
-    { 0, 0, 255, "blue" },      // OK
-    { 0, 255, 255, "cyan" },    // OK
-    { 255, 255, 255, "white" }, // OK
+const struct CHEERLIGHT cheerlights[] = {
+    { 255, 0, 0, "red" },         // OK
+    { 0, 255, 0, "green" },       // OK
+    { 0, 0, 255, "blue" },        // OK
+    { 0, 255, 255, "cyan" },      // OK
+    { 255, 255, 255, "white" },   // OK
     { 253, 245, 240, "oldlace" }, // Too similar to white...
     { 128, 0, 128, "purple" },    // OK
     { 255, 0, 255, "magenta" },   // Too similar to purple...
@@ -25,10 +24,11 @@ struct CHEERLIGHT cheerlights[] = {
     { 255, 192, 203, "pink" }     // Too light not pink enough!
 };
 
-short idx = 0;
-
 M5GFX display;
 M5Canvas canvas(&display);
+
+short idx = 0;
+long oldPosition = -999;
 
 void setup() {
     Serial.begin(9600);
@@ -44,9 +44,9 @@ void loop() {
     M5Dial.update();
     
     long newPosition = M5Dial.Encoder.read();
-    if (newPosition != oldPosition) {
+    if (abs(newPosition - oldPosition) >= ENCODER_SENSITIVITY) {
+        Serial.println(abs(newPosition - oldPosition));
         // Position has changed! 
-        // TODO consider only updating after a couple of position clicks?
         M5Dial.Speaker.tone(8000, 20);
         display.clear();
         display.startWrite();
@@ -60,8 +60,6 @@ void loop() {
         canvas.pushSprite(0, 0);
         display.endWrite();
 
-        // Some of the things below are constants.
-        // Should I clear the screen between things.
         // What are the bounds of newPosition?
         // Sort out the save location here... in cheerdial folder.
     
@@ -79,6 +77,10 @@ void loop() {
         }
         
         oldPosition = newPosition;
+    }
+
+    if (M5Dial.BtnA.wasClicked()) {
+        Serial.println("A btn clicked.");
     }
 
     // TODO something with the button being pressed...
