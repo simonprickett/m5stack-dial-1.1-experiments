@@ -103,11 +103,10 @@ void loop() {
         } else if (idx == NUM_COLORS) {
             idx = 0;
         }
-        
+
+        // Announce the new setting and update the screen.
         M5Dial.Speaker.tone(8000, 20);        
         setColorAndText(cheerlights[idx].r, cheerlights[idx].g, cheerlights[idx].b, cheerlights[idx].colorName, 1.5);
-
-        // Sort out the save location here... in cheerdial folder.
             
         // Reset the encoder value.
         M5Dial.Encoder.write(0);
