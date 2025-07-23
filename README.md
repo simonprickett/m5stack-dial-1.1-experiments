@@ -21,6 +21,10 @@ This repository contains the following code experiments that use Grafana APIs wi
 * [CheerDial](./cheerdial/) - a CheerLights like project.
 * TODO other experiments...
 
+## Libraries Used
+
+* [prometheus-arduino](https://github.com/grafana/prometheus-arduino) for Prometheus remote write.  Note that this library has its own dependencies listed in its README file.
+
 ## Resources
 
 * [M5Stack Dial 1.1 documentation](https://docs.m5stack.com/en/core/M5Dial%20V1.1).
