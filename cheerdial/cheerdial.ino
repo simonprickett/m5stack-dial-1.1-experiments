@@ -1,3 +1,4 @@
+#include <WiFi.h>
 #include "M5Dial.h"
 
 const short ENCODER_SENSITIVITY = 5; // Lower = less turning required.
@@ -31,14 +32,42 @@ M5Canvas canvas(&display);
 short idx = -1;
 long oldPosition = -999;
 
+void setColorAndText(int r, int g, int b, char *text) {
+    display.clear();
+    display.startWrite();
+    canvas.deleteSprite();
+    canvas.createSprite(M5Dial.Display.width(), M5Dial.Display.height());
+    canvas.fillSprite(M5Dial.Display.color888(r, g, b));
+    canvas.setTextColor(M5Dial.Display.color888(0, 0, 0));
+    canvas.setTextDatum(middle_center);
+    canvas.setFont(&fonts::Orbitron_Light_32);
+    canvas.setTextSize(1.5);
+    canvas.drawString(text, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
+    canvas.pushSprite(0, 0);
+    display.endWrite();  
+}
+
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
     auto cfg = M5.config();
     // true, false = Enable encoder, disable RFID.
     M5Dial.begin(cfg, true, false);
 
     display.begin();
     // Some other stuff...
+
+    // Connect to a wifi network...
+    WiFi.mode(WIFI_STA);
+    // TODO move these to secrets file!
+    WiFi.begin("SSID", "Password");
+
+    Serial.print("Connecting to WiFi ..");
+    while (WiFi.status() != WL_CONNECTED) {
+        Serial.print('.');
+        delay(1000);
+    }
+
+    Serial.println(WiFi.localIP());
 }
 
 void loop() {
@@ -57,20 +86,8 @@ void loop() {
             idx = 0;
         }
         
-        M5Dial.Speaker.tone(8000, 20);
-        
-        display.clear();
-        display.startWrite();
-        canvas.deleteSprite();
-        canvas.createSprite(M5Dial.Display.width(), M5Dial.Display.height());
-        canvas.fillSprite(M5Dial.Display.color888(cheerlights[idx].r, cheerlights[idx].g, cheerlights[idx].b));
-        canvas.setTextColor(M5Dial.Display.color888(0, 0, 0));
-        canvas.setTextDatum(middle_center);
-        canvas.setFont(&fonts::Orbitron_Light_32);
-        canvas.setTextSize(1.5);
-        canvas.drawString(cheerlights[idx].colorName, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
-        canvas.pushSprite(0, 0);
-        display.endWrite();
+        M5Dial.Speaker.tone(8000, 20);        
+        setColorAndText(cheerlights[idx].r, cheerlights[idx].g, cheerlights[idx].b, cheerlights[idx].colorName);
 
         // Sort out the save location here... in cheerdial folder.
             
@@ -83,5 +100,8 @@ void loop() {
         // TODO something with the button being pressed...
         char *selectedColor = cheerlights[idx].colorName;
         Serial.println(selectedColor);
+
+        // Example code for sending to Grafana Cloud:
+        // https://github.com/grafana/prometheus-arduino/blob/main/examples/prom_02_grafana_cloud/prom_02_grafana_cloud.ino
     }
 }
