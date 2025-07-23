@@ -81,6 +81,7 @@ void loop() {
 
     if (M5Dial.BtnA.wasClicked()) {
         // TODO something with the button being pressed...
-        Serial.println("A btn clicked.");
+        char *selectedColor = cheerlights[idx].colorName;
+        Serial.println(selectedColor);
     }
 }
