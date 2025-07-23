@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include "M5Dial.h"
+#include "config.h"
 
 const short ENCODER_SENSITIVITY = 5; // Lower = less turning required.
 
@@ -60,8 +61,7 @@ void setup() {
     setColorAndText(255, 165, 0, "Connecting...", 1);
 
     WiFi.mode(WIFI_STA);
-    // TODO move these to secrets file!
-    WiFi.begin("SSID", "PASSWORD");
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
     Serial.print("Connecting to WiFi...");
     // Give the WiFi status a chance to change from the original disconnected state.
