@@ -32,7 +32,7 @@ M5Canvas canvas(&display);
 short idx = -1;
 long oldPosition = -999;
 
-void setColorAndText(int r, int g, int b, char *text) {
+void setColorAndText(int r, int g, int b, char *text, float textSize) {
     display.clear();
     display.startWrite();
     canvas.deleteSprite();
@@ -41,7 +41,7 @@ void setColorAndText(int r, int g, int b, char *text) {
     canvas.setTextColor(M5Dial.Display.color888(0, 0, 0));
     canvas.setTextDatum(middle_center);
     canvas.setFont(&fonts::Orbitron_Light_32);
-    canvas.setTextSize(1.5);
+    canvas.setTextSize(textSize);
     canvas.drawString(text, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
     canvas.pushSprite(0, 0);
     display.endWrite();  
@@ -57,17 +57,23 @@ void setup() {
     // Some other stuff...
 
     // Connect to a wifi network...
+    setColorAndText(255, 165, 0, "Connecting...", 1);
+
     WiFi.mode(WIFI_STA);
     // TODO move these to secrets file!
     WiFi.begin("SSID", "Password");
 
-    Serial.print("Connecting to WiFi ..");
+    Serial.print("Connecting to WiFi...");
+    // TODO error checking and reporting!
     while (WiFi.status() != WL_CONNECTED) {
         Serial.print('.');
         delay(1000);
     }
 
+    setColorAndText(0, 255, 0, "Connected!", 1);
     Serial.println(WiFi.localIP());
+    M5Dial.Speaker.tone(8000, 20);        
+    delay(3000);
 }
 
 void loop() {
@@ -87,7 +93,7 @@ void loop() {
         }
         
         M5Dial.Speaker.tone(8000, 20);        
-        setColorAndText(cheerlights[idx].r, cheerlights[idx].g, cheerlights[idx].b, cheerlights[idx].colorName);
+        setColorAndText(cheerlights[idx].r, cheerlights[idx].g, cheerlights[idx].b, cheerlights[idx].colorName, 1.5);
 
         // Sort out the save location here... in cheerdial folder.
             
