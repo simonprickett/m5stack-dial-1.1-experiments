@@ -1,6 +1,5 @@
 #include "M5Dial.h"
 
-const short NUM_COLORS = 11;
 const short ENCODER_SENSITIVITY = 5; // Lower = less turning required.
 
 struct CHEERLIGHT {
@@ -23,6 +22,8 @@ const struct CHEERLIGHT cheerlights[] = {
     { 255, 165, 0, "orange" },    // OK
     { 255, 192, 203, "pink" }     // Too light not pink enough!
 };
+
+const short NUM_COLORS = sizeof(cheerlights) / sizeof(cheerlights[0]);
 
 M5GFX display;
 M5Canvas canvas(&display);
