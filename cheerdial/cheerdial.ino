@@ -61,13 +61,25 @@ void setup() {
 
     WiFi.mode(WIFI_STA);
     // TODO move these to secrets file!
-    WiFi.begin("SSID", "Password");
+    WiFi.begin("SSID", "PASSWORD");
 
     Serial.print("Connecting to WiFi...");
-    // TODO error checking and reporting!
-    while (WiFi.status() != WL_CONNECTED) {
-        Serial.print('.');
+    // Give the WiFi status a chance to change from the original disconnected state.
+    delay(1000);
+    int wifiStatus = WiFi.status();
+
+    while (wifiStatus != WL_CONNECTED && wifiStatus != WL_DISCONNECTED) {
+        Serial.print(".");
         delay(1000);
+        wifiStatus = WiFi.status();
+    }
+
+    if (wifiStatus == WL_DISCONNECTED) {
+        Serial.println("WiFi connection failed!");
+        setColorAndText(255, 0, 0, "WiFi fail!", 1);
+        while (1) {
+            delay(1000);
+        }
     }
 
     setColorAndText(0, 255, 0, "Connected!", 1);
