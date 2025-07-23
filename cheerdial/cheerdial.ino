@@ -61,6 +61,7 @@ void loop() {
         
         display.clear();
         display.startWrite();
+        canvas.deleteSprite();
         canvas.createSprite(M5Dial.Display.width(), M5Dial.Display.height());
         canvas.fillSprite(M5Dial.Display.color888(cheerlights[idx].r, cheerlights[idx].g, cheerlights[idx].b));
         canvas.setTextColor(M5Dial.Display.color888(0, 0, 0));
