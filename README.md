@@ -31,3 +31,4 @@ This repository contains the following code experiments that use Grafana APIs wi
 * [Arduino IDE setup / tutorial](https://docs.m5stack.com/en/arduino/m5dial/program).
 * [M5Stack Dial library on GitHub](https://github.com/m5stack/M5Dial).
 * [Source code for the factory installed M5Stack Dial demo app](https://github.com/m5stack/M5Dial-UserDemo).
+* [Example project that sends data to Grafana from a M5Stack device](https://www.hackster.io/ecasti/m5stack-as-sensor-for-prometheus-5bb162).
