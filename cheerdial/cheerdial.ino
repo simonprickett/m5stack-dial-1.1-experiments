@@ -61,14 +61,20 @@ void setup() {
     M5Dial.begin(cfg, true, false);
 
     display.begin();
-    // Some other stuff...
+
+    // Display the device ID for a moment.
+    setColorAndText(255, 255, 255, DEVICE_ID, 1);
+    delay(4000);
 
     // Connect to a wifi network...
     setColorAndText(255, 165, 0, "Connecting...", 1);
 
+    transport.setUseTls(true);
+    transport.setCerts(grafanaCert, strlen(grafanaCert));
     transport.setWifiSsid(WIFI_SSID);
     transport.setWifiPass(WIFI_PASSWORD);
     transport.setDebug(Serial);  // Remove this line to disable debug logging of the client.
+    
     if (!transport.begin()) {
         Serial.println("WiFi connection failed!");
         Serial.println(transport.errmsg);
