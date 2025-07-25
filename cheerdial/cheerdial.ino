@@ -5,8 +5,6 @@
 #include <PrometheusArduino.h>
 // TODO use the Grafana library to send stuff.
 
-const short ENCODER_SENSITIVITY = 5; // Lower = less turning required.
-
 struct CHEERLIGHT {
     int r;
     int g;
@@ -38,6 +36,9 @@ PromClient client(transport);
 
 short idx = -1;
 long oldPosition = -999;
+
+// Create a write request for 1 series.
+WriteRequest req(1);
 
 void setColorAndText(int r, int g, int b, char *text, float textSize) {
     display.clear();
@@ -74,7 +75,7 @@ void setup() {
     transport.setWifiSsid(WIFI_SSID);
     transport.setWifiPass(WIFI_PASSWORD);
     transport.setDebug(Serial);  // Remove this line to disable debug logging of the client.
-    
+
     if (!transport.begin()) {
         Serial.println("WiFi connection failed!");
         Serial.println(transport.errmsg);
@@ -118,7 +119,16 @@ void loop() {
     if (M5Dial.BtnA.wasClicked()) {
         // TODO something with the button being pressed...
         char *selectedColor = cheerlights[idx].colorName;
-        Serial.println(selectedColor);
+
+        // Define a TimeSeries which has a name of `grafanalights` and deviceID, colorName labels.
+        char buf[100];
+        sprintf(buf, "{device=\"%s\" color=\"%s\"}", DEVICE_ID, selectedColor);
+        Serial.println(buf);
+
+        TimeSeries ts(1, "grafanalights", buf);
+        ts.addSample(transport.getTimeMillis(), idx);
+
+        // Send the data...
 
         // Example code for sending to Grafana Cloud:
         // https://github.com/grafana/prometheus-arduino/blob/main/examples/prom_02_grafana_cloud/prom_02_grafana_cloud.ino
