@@ -1,6 +1,9 @@
-#include <WiFi.h>
 #include "M5Dial.h"
 #include "config.h"
+// TODO include a certificate file...
+#include <PromLokiTransport.h>
+#include <PrometheusArduino.h>
+// TODO use the Grafana library to send stuff.
 
 const short ENCODER_SENSITIVITY = 5; // Lower = less turning required.
 
@@ -29,6 +32,9 @@ const short NUM_COLORS = sizeof(cheerlights) / sizeof(cheerlights[0]);
 
 M5GFX display;
 M5Canvas canvas(&display);
+
+PromLokiTransport transport;
+PromClient client(transport);
 
 short idx = -1;
 long oldPosition = -999;
@@ -60,22 +66,12 @@ void setup() {
     // Connect to a wifi network...
     setColorAndText(255, 165, 0, "Connecting...", 1);
 
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-    Serial.print("Connecting to WiFi...");
-    // Give the WiFi status a chance to change from the original disconnected state.
-    delay(1000);
-    int wifiStatus = WiFi.status();
-
-    while (wifiStatus != WL_CONNECTED && wifiStatus != WL_DISCONNECTED) {
-        Serial.print(".");
-        delay(1000);
-        wifiStatus = WiFi.status();
-    }
-
-    if (wifiStatus == WL_DISCONNECTED) {
+    transport.setWifiSsid(WIFI_SSID);
+    transport.setWifiPass(WIFI_PASSWORD);
+    transport.setDebug(Serial);  // Remove this line to disable debug logging of the client.
+    if (!transport.begin()) {
         Serial.println("WiFi connection failed!");
+        Serial.println(transport.errmsg);
         setColorAndText(255, 0, 0, "WiFi fail!", 1);
         while (1) {
             delay(1000);
