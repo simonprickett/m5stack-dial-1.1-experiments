@@ -1,6 +1,6 @@
 #include "M5Dial.h"
 #include "config.h"
-// TODO include a certificate file...
+#include "certificates.h"
 #include <PromLokiTransport.h>
 #include <PrometheusArduino.h>
 // TODO use the Grafana library to send stuff.
