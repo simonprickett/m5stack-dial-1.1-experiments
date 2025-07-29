@@ -33,3 +33,4 @@ This repository contains the following code experiments that use Grafana APIs wi
 * [Source code for the factory installed M5Stack Dial demo app](https://github.com/m5stack/M5Dial-UserDemo).
 * [Example project that sends data to Grafana from a M5Stack device](https://www.hackster.io/ecasti/m5stack-as-sensor-for-prometheus-5bb162).
 * [Interesting example project that exposes a web server on the M5Stack Dial](https://github.com/kevinlieb/AlmostSimplestHelloWorld/tree/webandwifiandspiffsandwebsocket).
+* A potential [3D printable stand](https://www.thingiverse.com/thing:6277342) for the M5Dial device.
