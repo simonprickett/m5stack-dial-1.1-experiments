@@ -3,7 +3,6 @@
 #include "certificates.h"
 #include <PromLokiTransport.h>
 #include <PrometheusArduino.h>
-// TODO use the Grafana library to send stuff.
 
 struct CHEERLIGHT {
     int r;
@@ -37,8 +36,9 @@ PromClient client(transport);
 short idx = -1;
 long oldPosition = -999;
 
-// Create a write request for 1 series.
+// Create a write request for 1 series and a timeseries for 1 sample at a time.
 WriteRequest req(1);
+TimeSeries ts(1, "grafanalights", "");  // Labels?
 
 void setColorAndText(int r, int g, int b, char *text, float textSize) {
     display.clear();
@@ -74,7 +74,7 @@ void setup() {
     transport.setCerts(grafanaCert, strlen(grafanaCert));
     transport.setWifiSsid(WIFI_SSID);
     transport.setWifiPass(WIFI_PASSWORD);
-    transport.setDebug(Serial);  // Remove this line to disable debug logging of the client.
+    transport.setDebug(Serial);
 
     if (!transport.begin()) {
         Serial.println("WiFi connection failed!");
@@ -84,6 +84,27 @@ void setup() {
             delay(1000);
         }
     }
+
+    // Configure the client.
+    client.setUrl(GC_URL);
+    client.setPath((char *)GC_PATH);
+    client.setPort(GC_PORT);
+    client.setUser(GC_USER);
+    client.setPass(GC_PASS);
+    client.setDebug(Serial);
+
+    if (! client.begin()) {
+        setColorAndText(255, 0, 0, "Client error!", 1);
+        while (1) {
+            delay(1000);
+        }    
+    }
+
+    //char buf[100];
+    //sprintf(buf, "{unit=\"%s\"}", DEVICE_ID);
+    //Serial.println(buf);
+
+    req.addTimeSeries(ts);
 
     setColorAndText(0, 255, 0, "Connected!", 1);
     Serial.println(WiFi.localIP());
@@ -117,20 +138,23 @@ void loop() {
     }
 
     if (M5Dial.BtnA.wasClicked()) {
-        // TODO something with the button being pressed...
-        char *selectedColor = cheerlights[idx].colorName;
-
-        // Define a TimeSeries which has a name of `grafanalights` and deviceID, colorName labels.
-        char buf[100];
-        sprintf(buf, "{device=\"%s\" color=\"%s\"}", DEVICE_ID, selectedColor);
-        Serial.println(buf);
-
-        TimeSeries ts(1, "grafanalights", buf);
         ts.addSample(transport.getTimeMillis(), idx);
 
         // Send the data...
+        PromClient::SendResult res = client.send(req);
+        if (res == PromClient::SendResult::SUCCESS) {
+            setColorAndText(0, 255, 0, "Thanks!", 1.5);
+            M5Dial.Speaker.tone(8000, 20);        
+        } else {
+            // Something went wrong :(
+            Serial.println(client.errmsg);
+            setColorAndText(255, 0, 0, "Error!", 1.5);
+        }
 
-        // Example code for sending to Grafana Cloud:
-        // https://github.com/grafana/prometheus-arduino/blob/main/examples/prom_02_grafana_cloud/prom_02_grafana_cloud.ino
+        ts.resetSamples();
+        delay(2000);
+
+        // Put the display back to the selected color.
+        setColorAndText(cheerlights[idx].r, cheerlights[idx].g, cheerlights[idx].b, cheerlights[idx].colorName, 1.5);
     }
 }
