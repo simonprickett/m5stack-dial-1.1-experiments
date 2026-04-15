@@ -67,29 +67,6 @@ Then compile and flash in one step:
 ./build.sh flash /dev/cu.usbmodem101
 ```
 
-### Upload the filesystem (LittleFS)
-
-`config.json`, `items.json`, and images live on the device's LittleFS filesystem and are uploaded separately from the sketch.
-
-Create a `data/` directory inside `swagdial/` and populate it:
-
-```
-swagdial/data/
-  config.json          ← copy of your real config.json (not config_example.json)
-  items.json
-  images/
-    tshirt.jpg
-    ...
-```
-
-Then flash the filesystem:
-
-```bash
-./build.sh data-flash /dev/cu.usbmodem101
-```
-
-This automatically locates `mklittlefs` and `esptool` from the ESP32 core installed by `setup`, reads the correct partition offset and size from the board's partition table, builds a LittleFS image, and flashes it.
-
 ### Serial monitor
 
 Watch connection status and error output:
@@ -100,50 +77,41 @@ Watch connection status and error output:
 
 ---
 
-## Device filesystem layout
+## Configuration — `config_local.h`
 
-| Path on device | Description |
-|---|---|
-| `/config.json` | WiFi credentials and Prometheus endpoint — **never commit this** |
-| `/items.json` | The swag item hierarchy |
-| `/images/*.jpg` | Optional item images (240×240 px recommended) |
+Copy `config_local_example.h` to `config_local.h` and fill in your values. This file is gitignored and must not be committed.
 
----
-
-## Configuration — `config.json`
-
-Copy `config_example.json` to `config.json` and fill in your values. This file is gitignored and must not be committed.
-
-```json
-{
-  "wifi_ssid": "your_wifi_ssid",
-  "wifi_password": "your_wifi_password",
-  "device_id": "swagdial-1",
-  "gc_host": "prometheus-prod-24-prod-eu-west-2.grafana.net",
-  "gc_path": "/api/prom/push",
-  "gc_port": 443,
-  "gc_user": "your_grafana_cloud_user_id",
-  "gc_pass": "your_grafana_cloud_api_token"
-}
+```cpp
+#define WIFI_SSID            "your_wifi_ssid"
+#define WIFI_PASSWORD        "your_wifi_password"
+#define DEVICE_ID            "swagdial-1"
+#define GC_HOST              "prometheus-prod-24-prod-eu-west-2.grafana.net"
+#define GC_PATH              "/api/prom/push"
+#define GC_PORT              443
+#define GC_USER              "your_grafana_cloud_user_id"
+#define GC_PASS              "your_grafana_cloud_api_token"
+#define ENCODER_SENSITIVITY  3
 ```
 
 | Field | Description |
 |---|---|
-| `wifi_ssid` | WiFi network name |
-| `wifi_password` | WiFi password |
-| `device_id` | Unique identifier for this device — used as a label on every metric |
-| `gc_host` | Grafana Cloud Prometheus remote write hostname (no `https://`) |
-| `gc_path` | Grafana Cloud remote write path |
-| `gc_port` | Port — 443 for TLS |
-| `gc_user` | Grafana Cloud metrics user ID (numeric) |
-| `gc_pass` | Grafana Cloud API token with MetricsPublisher role |
-| `encoder_sensitivity` | Optional. Minimum encoder steps to register a turn. Lower = more sensitive. Default: `3` |
+| `WIFI_SSID` | WiFi network name |
+| `WIFI_PASSWORD` | WiFi password |
+| `DEVICE_ID` | Unique identifier for this device — used as a label on every metric |
+| `GC_HOST` | Grafana Cloud Prometheus remote write hostname (no `https://`) |
+| `GC_PATH` | Grafana Cloud remote write path |
+| `GC_PORT` | Port — 443 for TLS |
+| `GC_USER` | Grafana Cloud metrics user ID (numeric) |
+| `GC_PASS` | Grafana Cloud API token with MetricsPublisher role |
+| `ENCODER_SENSITIVITY` | Minimum encoder steps to register a turn. Lower = more sensitive. Default: `3` |
+
+Config is compiled into the firmware — reflash to change it.
 
 ---
 
 ## Items — `items.json`
 
-Describes the swag hierarchy and the Prometheus labels to emit. The file is loaded at startup and is safe to commit.
+Describes the swag hierarchy and the Prometheus labels to emit. `items.json` is the canonical source of truth (safe to commit); its content is also embedded as a string literal in `swagdial.ino` and compiled into the firmware. To change the items, edit both files and reflash.
 
 ### Top-level structure
 
@@ -226,12 +194,58 @@ gcon_swag{device_id="swagdial-1",category="tshirt",design="logo",size="l"} 1
 
 ## Images
 
+Images are embedded directly in the firmware as C byte arrays and written to LittleFS on first boot. This avoids filesystem image compatibility issues between build tools and the ESP32 runtime.
+
 - Format: JPEG
-- Recommended size: 240×240 pixels (the Dial's display is 240×240 round)
-- Location on device: `/images/<filename>`
+- Required size: 240×240 pixels (the Dial's display is 240×240 round)
 - If an image file is not found or the `image` field is omitted, the display falls back to a coloured background with the item name
 
-A simple naming convention that mirrors the hierarchy works well:
+### Adding an image
+
+**1. Download a PNG from [Flaticon](https://www.flaticon.com) or another source.**
+
+Free Flaticon icons require attribution — add a note to your documentation.
+
+**2. Resize and convert to JPEG (built-in macOS tool, no install needed):**
+
+```bash
+sips -z 240 240 -s format jpeg tshirt.png --out tshirt.jpg
+```
+
+**3. Convert the JPEG to a C header file:**
+
+```bash
+xxd -i tshirt.jpg > swagdial/images/tshirt_jpg.h
+```
+
+**4. Include the header in `swagdial.ino`:**
+
+```cpp
+#include "images/tshirt_jpg.h"
+```
+
+**5. Add an entry to the `IMAGE_ASSETS` array in `swagdial.ino`:**
+
+```cpp
+static const ImageAsset IMAGE_ASSETS[] = {
+  { "/images/tshirt.jpg", tshirt_jpg, tshirt_jpg_len },
+  // add more here
+};
+```
+
+The variable names (`tshirt_jpg`, `tshirt_jpg_len`) are generated by `xxd` from the filename — `xxd -i foo_bar.jpg` produces `foo_bar_jpg` and `foo_bar_jpg_len`.
+
+**6. Flash the sketch:**
+
+```bash
+./build.sh flash /dev/cu.usbmodem101
+```
+
+On first boot after flashing, the sketch writes any missing image files to LittleFS. Subsequent boots skip files that are already present.
+
+### Naming convention
+
+Use names that mirror the hierarchy for clarity:
 
 ```
 tshirt.jpg
@@ -269,7 +283,7 @@ Every selection sends a single sample with value `1` to the configured remote wr
 
 Labels on each metric point:
 
-- `device_id` — from `config.json`, identifies which physical device recorded the event
+- `device_id` — from `config_local.h`, identifies which physical device recorded the event
 - One label per level of the hierarchy the user navigated, using the `label_key`/`label_value` pairs from `items.json`
 
 This structure supports queries like:

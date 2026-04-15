@@ -1,6 +1,7 @@
 #include "M5Dial.h"
 #include "certificates.h"
 #include "config_local.h"
+#include "images/tshirt_jpg.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <PromLokiTransport.h>
@@ -282,7 +283,7 @@ void displayCurrentItem() {
       if (buf) {
         f.read(buf, sz);
         f.close();
-        canvas.drawJpg(buf, sz, 0, 0, w, h);
+        canvas.drawJpg(buf, sz, 0, 0, w, h, 0, 0, 0.7f, 0.7f, middle_center);
         free(buf);
         imgDrawn = true;
       } else {
@@ -321,6 +322,36 @@ void displayCurrentItem() {
   display.endWrite();
 }
 
+// ─── Image provisioning ───────────────────────────────────────────────────────
+
+struct ImageAsset {
+  const char*          path;
+  const unsigned char* data;
+  unsigned int         len;
+};
+
+static const ImageAsset IMAGE_ASSETS[] = {
+  { "/images/tshirt.jpg", tshirt_jpg, tshirt_jpg_len },
+};
+
+void provisionImages() {
+  if (!LittleFS.exists("/images")) {
+    LittleFS.mkdir("/images");
+  }
+  for (auto& asset : IMAGE_ASSETS) {
+    if (!LittleFS.exists(asset.path)) {
+      File f = LittleFS.open(asset.path, "w");
+      if (f) {
+        f.write(asset.data, asset.len);
+        f.close();
+        Serial.printf("Wrote %s (%u bytes)\n", asset.path, asset.len);
+      } else {
+        Serial.printf("Failed to write %s\n", asset.path);
+      }
+    }
+  }
+}
+
 // ─── Setup & loop ─────────────────────────────────────────────────────────────
 
 void setup() {
@@ -341,6 +372,7 @@ void setup() {
   // LittleFS — optional, used only for images. Failure is non-fatal.
   if (LittleFS.begin(true)) {
     imagesAvailable = true;
+    provisionImages();
     Serial.println("LittleFS mounted — images enabled");
   } else {
     Serial.println("LittleFS unavailable — images disabled");

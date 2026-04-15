@@ -11,9 +11,8 @@ M5Dial/Prometheus library API patterns.
 
 ## Current state
 
-- **Device is working**: menus navigate correctly, encoder and button work.
-- Metric sending not yet tested on hardware (next step).
-- Images not yet working (see below).
+- **Device is fully working**: menus, encoder, button, metric sending, and images all work.
+- Images display at 70% scale, centred, with a solid black bar at the bottom for the item name.
 
 ### Files
 
