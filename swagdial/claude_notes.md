@@ -79,9 +79,11 @@ approach above is the reliable alternative.
 ### Display UX
 - Item name text: white for branch nodes, **orange** for leaf nodes (signals "press to submit")
 - Font: Orbitron_Light_24 at full size (<8 chars), 0.85× (8–9 chars), 0.72× (10+ chars)
-- Solid black bar at bottom so text is always readable over images
+- Canvas background: white; images drawn at 70% scale centered, shifted up 13px (`y=-13`) to clear the bottom bar
+- Bottom bar: navy `color888(16, 24, 48)`, starts at `h-47` (47px tall), text anchored at `h-8`
 - `>` indicator on right edge for branch nodes
 - Position counter (e.g. `2/5`) at top
+- Back item shows `back.jpg` image
 
 ### Metric design
 - Metric name: `gcon_swag` (in ITEMS_JSON)
