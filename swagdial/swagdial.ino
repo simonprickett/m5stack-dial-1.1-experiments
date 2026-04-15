@@ -9,7 +9,7 @@
 
 // Items hierarchy embedded in firmware — edit and reflash to change.
 static const char ITEMS_JSON[] = R"({
-  "metric": "gcon_swag_total",
+  "metric": "gcon_swag",
   "items": [
     {
       "label_key": "category",

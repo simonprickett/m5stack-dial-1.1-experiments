@@ -1,5 +1,5 @@
 {
-  "metric": "gcon_swag_total",
+  "metric": "gcon_swag",
   "items": [
     {
       "label_key": "category",

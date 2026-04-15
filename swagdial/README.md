@@ -149,7 +149,7 @@ Describes the swag hierarchy and the Prometheus labels to emit. The file is load
 
 ```json
 {
-  "metric": "gcon_swag_total",
+  "metric": "gcon_swag",
   "items": [ ... ]
 }
 ```
@@ -190,7 +190,7 @@ A **Back** item is automatically added as the last entry at every non-root level
 
 ```json
 {
-  "metric": "gcon_swag_total",
+  "metric": "gcon_swag",
   "items": [
     {
       "label_key": "category",
@@ -219,7 +219,7 @@ A **Back** item is automatically added as the last entry at every non-root level
 Selecting "Large Logo T-Shirt" on a device with `device_id = "swagdial-1"` would send:
 
 ```
-gcon_swag_total{device_id="swagdial-1",category="tshirt",design="logo",size="l"} 1
+gcon_swag{device_id="swagdial-1",category="tshirt",design="logo",size="l"} 1
 ```
 
 ---
@@ -276,17 +276,17 @@ This structure supports queries like:
 
 ```promql
 # Total selections across all devices and items
-sum(increase(gcon_swag_total[$__range]))
+sum(increase(gcon_swag[$__range]))
 
 # All t-shirt selections, any design or size
-sum(increase(gcon_swag_total{category="tshirt"}[$__range]))
+sum(increase(gcon_swag{category="tshirt"}[$__range]))
 
 # Logo t-shirts only, any size
-sum(increase(gcon_swag_total{category="tshirt",design="logo"}[$__range]))
+sum(increase(gcon_swag{category="tshirt",design="logo"}[$__range]))
 
 # Large items only
-sum(increase(gcon_swag_total{size="l"}[$__range]))
+sum(increase(gcon_swag{size="l"}[$__range]))
 
 # Selections over time, broken down by category
-sum by (category) (rate(gcon_swag_total[$__rate_interval]))
+sum by (category) (rate(gcon_swag[$__rate_interval]))
 ```
