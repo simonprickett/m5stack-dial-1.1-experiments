@@ -308,13 +308,11 @@ void displayCurrentItem() {
   canvas.deleteSprite();
   canvas.createSprite(w, h);
 
-  bool imgDrawn = false;
+  canvas.fillSprite(M5Dial.Display.color888(255, 255, 255));
+
   if (back) {
     const ImageAsset* asset = findImage("back.jpg");
-    if (asset) {
-      canvas.drawJpg(asset->data, asset->len, 0, 0, w, h, 0, 0, 0.7f, 0.7f, middle_center);
-      imgDrawn = true;
-    }
+    if (asset) canvas.drawJpg(asset->data, asset->len, 0, 0, w, h, 0, 0, 0.7f, 0.7f, middle_center);
   } else {
     // Try item's own image, fall back to top-level category image if not found
     String imgName = (*currentItems)[currentIndex].image;
@@ -323,15 +321,7 @@ void displayCurrentItem() {
       imgName = (*navStack[0].items)[navStack[0].selectedIndex].image;
       asset = imgName.length() > 0 ? findImage(imgName) : nullptr;
     }
-    if (asset) {
-      canvas.drawJpg(asset->data, asset->len, 0, 0, w, h, 0, 0, 0.7f, 0.7f, middle_center);
-      imgDrawn = true;
-    }
-  }
-
-  if (!imgDrawn) {
-    uint32_t bg = back ? CLR_BACK : (leaf ? CLR_LEAF : CLR_BRANCH);
-    canvas.fillSprite(bg);
+    if (asset) canvas.drawJpg(asset->data, asset->len, 0, 0, w, h, 0, 0, 0.7f, 0.7f, middle_center);
   }
 
   // Solid bar at bottom so text is always readable
