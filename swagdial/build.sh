@@ -2,7 +2,7 @@
 # build.sh — compile and flash swagdial for M5Stack Dial 1.1
 set -euo pipefail
 
-FQBN="esp32:esp32:m5stack_dial"
+FQBN="esp32:esp32:m5stack_dial:PartitionScheme=huge_app"
 BOARD_URL="https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json"
 SKETCH_DIR="$(cd "$(dirname "$0")" && pwd)"
 

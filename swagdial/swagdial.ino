@@ -3,11 +3,16 @@
 #include "config_local.h"
 #include "images/tshirt_jpg.h"
 #include "images/sticker_jpg.h"
-#include <LittleFS.h>
+#include "images/coffee_jpg.h"
+#include "images/patch_jpg.h"
+#include "images/crochet_jpg.h"
+#include "images/keychain_jpg.h"
+#include "images/coin_jpg.h"
 #include <ArduinoJson.h>
 #include <PromLokiTransport.h>
 #include <PrometheusArduino.h>
 #include <vector>
+#include "types.h"
 
 // Items hierarchy embedded in firmware — edit and reflash to change.
 static const char ITEMS_JSON[] = R"({
@@ -60,36 +65,73 @@ static const char ITEMS_JSON[] = R"({
           ]
         }
       ]
+    },
+    {
+      "label_key": "category",
+      "label_value": "patch",
+      "display_name": "Patch",
+      "image": "patch.jpg",
+      "children": [
+        { "label_key": "type", "label_value": "contributor", "display_name": "Contributor", "image": "patch.jpg" },
+        { "label_key": "type", "label_value": "champion",    "display_name": "Champion",    "image": "patch.jpg" }
+      ]
+    },
+    {
+      "label_key": "category",
+      "label_value": "coin",
+      "display_name": "Coin",
+      "image": "coin.jpg"
+    },
+    {
+      "label_key": "category",
+      "label_value": "keychain",
+      "display_name": "Keychain",
+      "image": "keychain.jpg",
+      "children": [
+        { "label_key": "design", "label_value": "logo", "display_name": "Logo", "image": "keychain.jpg" },
+        { "label_key": "design", "label_value": "doom", "display_name": "Doom", "image": "keychain.jpg" }
+      ]
+    },
+    {
+      "label_key": "category",
+      "label_value": "crochet",
+      "display_name": "Crochet",
+      "image": "crochet.jpg"
+    },
+    {
+      "label_key": "category",
+      "label_value": "coffee",
+      "display_name": "Coffee",
+      "image": "coffee.jpg",
+      "children": [
+        { "label_key": "drink", "label_value": "americano",  "display_name": "Americano",  "image": "coffee.jpg" },
+        { "label_key": "drink", "label_value": "latte",      "display_name": "Latte",      "image": "coffee.jpg" },
+        { "label_key": "drink", "label_value": "espresso",   "display_name": "Espresso",   "image": "coffee.jpg" },
+        { "label_key": "drink", "label_value": "cappuccino", "display_name": "Cappuccino", "image": "coffee.jpg" },
+        { "label_key": "drink", "label_value": "mocha",      "display_name": "Mocha",      "image": "coffee.jpg" }
+      ]
     }
   ]
 })";
 
-// ─── Structs ──────────────────────────────────────────────────────────────────
+// ─── Image assets ─────────────────────────────────────────────────────────────
 
-struct Config {
-  String wifiSsid;
-  String wifiPassword;
-  String deviceId;
-  String gcUrl;
-  String gcPath;
-  int    gcPort;
-  String gcUser;
-  String gcPass;
-  int    encoderSensitivity;
+static const ImageAsset IMAGE_ASSETS[] = {
+  { "tshirt.jpg",   tshirt_jpg,   tshirt_jpg_len   },
+  { "sticker.jpg",  sticker_jpg,  sticker_jpg_len  },
+  { "coffee.jpg",   coffee_jpg,   coffee_jpg_len   },
+  { "patch.jpg",    patch_jpg,    patch_jpg_len    },
+  { "crochet.jpg",  crochet_jpg,  crochet_jpg_len  },
+  { "keychain.jpg", keychain_jpg, keychain_jpg_len },
+  { "coin.jpg",     coin_jpg,     coin_jpg_len     },
 };
 
-struct MenuItem {
-  String                labelKey;
-  String                labelValue;
-  String                displayName;
-  String                image;
-  std::vector<MenuItem> children;
-};
-
-struct NavFrame {
-  std::vector<MenuItem>* items;
-  int                    selectedIndex;
-};
+static const ImageAsset* findImage(const String& name) {
+  for (auto& asset : IMAGE_ASSETS) {
+    if (name == asset.name) return &asset;
+  }
+  return nullptr;
+}
 
 // ─── Globals ──────────────────────────────────────────────────────────────────
 
@@ -100,7 +142,6 @@ std::vector<NavFrame>  navStack;
 std::vector<MenuItem>* currentItems = nullptr;
 int                    currentIndex  = 0;
 long                   lastEncoderPos = 0;
-bool                   imagesAvailable = false;
 
 M5GFX             display;
 M5Canvas          canvas(&display);
@@ -261,35 +302,22 @@ void displayCurrentItem() {
   bool   leaf = isLeafItem(currentIndex);
   String name = back ? "< Back" : (*currentItems)[currentIndex].displayName;
 
-  String imgPath = "";
-  if (!back && imagesAvailable) {
-    String imgFile = (*currentItems)[currentIndex].image;
-    if (imgFile.length() > 0) {
-      imgPath = "/images/" + imgFile;
-    }
-  }
-
   display.startWrite();
   canvas.deleteSprite();
   canvas.createSprite(w, h);
 
-  // drawJpgFile() doesn't work with LittleFS on this version of M5GFX —
-  // read into a heap buffer first and use drawJpg() instead.
   bool imgDrawn = false;
-  if (!imgPath.isEmpty() && LittleFS.exists(imgPath.c_str())) {
-    File f = LittleFS.open(imgPath.c_str(), "r");
-    if (f) {
-      size_t sz = f.size();
-      uint8_t* buf = (uint8_t*)malloc(sz);
-      if (buf) {
-        f.read(buf, sz);
-        f.close();
-        canvas.drawJpg(buf, sz, 0, 0, w, h, 0, 0, 0.7f, 0.7f, middle_center);
-        free(buf);
-        imgDrawn = true;
-      } else {
-        f.close();
-      }
+  if (!back) {
+    // Try item's own image, fall back to top-level category image if not found
+    String imgName = (*currentItems)[currentIndex].image;
+    const ImageAsset* asset = imgName.length() > 0 ? findImage(imgName) : nullptr;
+    if (!asset && !navStack.empty()) {
+      imgName = (*navStack[0].items)[navStack[0].selectedIndex].image;
+      asset = imgName.length() > 0 ? findImage(imgName) : nullptr;
+    }
+    if (asset) {
+      canvas.drawJpg(asset->data, asset->len, 0, 0, w, h, 0, 0, 0.7f, 0.7f, middle_center);
+      imgDrawn = true;
     }
   }
 
@@ -301,11 +329,13 @@ void displayCurrentItem() {
   // Solid bar at bottom so text is always readable
   canvas.fillRect(0, h - 56, w, 56, M5Dial.Display.color888(0, 0, 0));
 
-  // Item name
+  // Item name — shrink slightly for longer strings so they fit
   canvas.setFont(&fonts::Orbitron_Light_24);
-  canvas.setTextColor(M5Dial.Display.color888(255, 255, 255));
+  canvas.setTextColor(leaf ? M5Dial.Display.color888(255, 140, 0) : M5Dial.Display.color888(255, 255, 255));
   canvas.setTextDatum(bottom_center);
+  canvas.setTextSize(name.length() >= 10 ? 0.72f : name.length() >= 8 ? 0.85f : 1.0f);
   canvas.drawString(name, cx, h - 8);
+  canvas.setTextSize(1.0f);
 
   // Position indicator at top
   canvas.setFont(&fonts::Font2);
@@ -321,37 +351,6 @@ void displayCurrentItem() {
 
   canvas.pushSprite(0, 0);
   display.endWrite();
-}
-
-// ─── Image provisioning ───────────────────────────────────────────────────────
-
-struct ImageAsset {
-  const char*          path;
-  const unsigned char* data;
-  unsigned int         len;
-};
-
-static const ImageAsset IMAGE_ASSETS[] = {
-  { "/images/tshirt.jpg",   tshirt_jpg,   tshirt_jpg_len   },
-  { "/images/sticker.jpg",  sticker_jpg,  sticker_jpg_len  },
-};
-
-void provisionImages() {
-  if (!LittleFS.exists("/images")) {
-    LittleFS.mkdir("/images");
-  }
-  for (auto& asset : IMAGE_ASSETS) {
-    if (!LittleFS.exists(asset.path)) {
-      File f = LittleFS.open(asset.path, "w");
-      if (f) {
-        f.write(asset.data, asset.len);
-        f.close();
-        Serial.printf("Wrote %s (%u bytes)\n", asset.path, asset.len);
-      } else {
-        Serial.printf("Failed to write %s\n", asset.path);
-      }
-    }
-  }
 }
 
 // ─── Setup & loop ─────────────────────────────────────────────────────────────
@@ -370,15 +369,6 @@ void setup() {
     while (true) delay(1000);
   }
   Serial.println("Items loaded OK");
-
-  // LittleFS — optional, used only for images. Failure is non-fatal.
-  if (LittleFS.begin(true)) {
-    imagesAvailable = true;
-    provisionImages();
-    Serial.println("LittleFS mounted — images enabled");
-  } else {
-    Serial.println("LittleFS unavailable — images disabled");
-  }
 
   // Show device ID briefly so the operator knows which unit this is
   showStatus(config.deviceId, CLR_NEUTRAL);

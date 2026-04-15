@@ -48,6 +48,51 @@
           ]
         }
       ]
+    },
+    {
+      "label_key": "category",
+      "label_value": "patch",
+      "display_name": "Patch",
+      "image": "patch.jpg",
+      "children": [
+        { "label_key": "type", "label_value": "contributor", "display_name": "Contributor", "image": "patch.jpg" },
+        { "label_key": "type", "label_value": "champion",    "display_name": "Champion",    "image": "patch.jpg" }
+      ]
+    },
+    {
+      "label_key": "category",
+      "label_value": "coin",
+      "display_name": "Coin",
+      "image": "coin.jpg"
+    },
+    {
+      "label_key": "category",
+      "label_value": "keychain",
+      "display_name": "Keychain",
+      "image": "keychain.jpg",
+      "children": [
+        { "label_key": "design", "label_value": "logo", "display_name": "Logo", "image": "keychain.jpg" },
+        { "label_key": "design", "label_value": "doom", "display_name": "Doom", "image": "keychain.jpg" }
+      ]
+    },
+    {
+      "label_key": "category",
+      "label_value": "crochet",
+      "display_name": "Crochet",
+      "image": "crochet.jpg"
+    },
+    {
+      "label_key": "category",
+      "label_value": "coffee",
+      "display_name": "Coffee",
+      "image": "coffee.jpg",
+      "children": [
+        { "label_key": "drink", "label_value": "americano",  "display_name": "Americano",  "image": "coffee.jpg" },
+        { "label_key": "drink", "label_value": "latte",      "display_name": "Latte",      "image": "coffee.jpg" },
+        { "label_key": "drink", "label_value": "espresso",   "display_name": "Espresso",   "image": "coffee.jpg" },
+        { "label_key": "drink", "label_value": "cappuccino", "display_name": "Cappuccino", "image": "coffee.jpg" },
+        { "label_key": "drink", "label_value": "mocha",      "display_name": "Mocha",      "image": "coffee.jpg" }
+      ]
     }
   ]
 }
