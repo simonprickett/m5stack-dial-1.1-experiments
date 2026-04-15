@@ -119,7 +119,7 @@ Copy `config_example.json` to `config.json` and fill in your values. This file i
   "wifi_ssid": "your_wifi_ssid",
   "wifi_password": "your_wifi_password",
   "device_id": "swagdial-1",
-  "gc_url": "prometheus-prod-24-prod-eu-west-2.grafana.net",
+  "gc_host": "prometheus-prod-24-prod-eu-west-2.grafana.net",
   "gc_path": "/api/prom/push",
   "gc_port": 443,
   "gc_user": "your_grafana_cloud_user_id",
@@ -132,7 +132,7 @@ Copy `config_example.json` to `config.json` and fill in your values. This file i
 | `wifi_ssid` | WiFi network name |
 | `wifi_password` | WiFi password |
 | `device_id` | Unique identifier for this device — used as a label on every metric |
-| `gc_url` | Grafana Cloud Prometheus remote write hostname (no `https://`) |
+| `gc_host` | Grafana Cloud Prometheus remote write hostname (no `https://`) |
 | `gc_path` | Grafana Cloud remote write path |
 | `gc_port` | Port — 443 for TLS |
 | `gc_user` | Grafana Cloud metrics user ID (numeric) |

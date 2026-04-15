@@ -1,11 +1,66 @@
 #include "M5Dial.h"
 #include "certificates.h"
+#include "config_local.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <PromLokiTransport.h>
 #include <PrometheusArduino.h>
 #include <vector>
 
+// Items hierarchy embedded in firmware — edit and reflash to change.
+static const char ITEMS_JSON[] = R"({
+  "metric": "gcon_swag_total",
+  "items": [
+    {
+      "label_key": "category",
+      "label_value": "tshirt",
+      "display_name": "T-Shirt",
+      "image": "tshirt.jpg",
+      "children": [
+        {
+          "label_key": "design",
+          "label_value": "logo",
+          "display_name": "Logo",
+          "image": "tshirt_logo.jpg",
+          "children": [
+            { "label_key": "size", "label_value": "s",  "display_name": "Small"   },
+            { "label_key": "size", "label_value": "m",  "display_name": "Medium"  },
+            { "label_key": "size", "label_value": "l",  "display_name": "Large"   },
+            { "label_key": "size", "label_value": "xl", "display_name": "X-Large" }
+          ]
+        }
+      ]
+    },
+    {
+      "label_key": "category",
+      "label_value": "sticker",
+      "display_name": "Sticker",
+      "image": "sticker.jpg",
+      "children": [
+        {
+          "label_key": "design",
+          "label_value": "logos",
+          "display_name": "Logos",
+          "children": [
+            { "label_key": "item", "label_value": "mimir",   "display_name": "Mimir",   "image": "sticker_logos_mimir.jpg"   },
+            { "label_key": "item", "label_value": "grafana", "display_name": "Grafana", "image": "sticker_logos_grafana.jpg" },
+            { "label_key": "item", "label_value": "tempo",   "display_name": "Tempo",   "image": "sticker_logos_tempo.jpg"   }
+          ]
+        },
+        {
+          "label_key": "design",
+          "label_value": "grot",
+          "display_name": "Grot",
+          "children": [
+            { "label_key": "item", "label_value": "sunglasses", "display_name": "Sunglasses" },
+            { "label_key": "item", "label_value": "guitar",     "display_name": "Guitar"     },
+            { "label_key": "item", "label_value": "lgbt",       "display_name": "LGBT"       }
+          ]
+        }
+      ]
+    }
+  ]
+})";
 
 // ─── Structs ──────────────────────────────────────────────────────────────────
 
@@ -43,6 +98,7 @@ std::vector<NavFrame>  navStack;
 std::vector<MenuItem>* currentItems = nullptr;
 int                    currentIndex  = 0;
 long                   lastEncoderPos = 0;
+bool                   imagesAvailable = false;
 
 M5GFX             display;
 M5Canvas          canvas(&display);
@@ -93,25 +149,18 @@ void navigateToRoot() {
   resetEncoder();
 }
 
-// ─── JSON loading ─────────────────────────────────────────────────────────────
+// ─── Config & items loading ───────────────────────────────────────────────────
 
-bool loadConfig() {
-  File f = LittleFS.open("/config.json", "r");
-  if (!f) return false;
-  DynamicJsonDocument doc(1024);
-  DeserializationError err = deserializeJson(doc, f);
-  f.close();
-  if (err) return false;
-  config.wifiSsid     = doc["wifi_ssid"].as<String>();
-  config.wifiPassword = doc["wifi_password"].as<String>();
-  config.deviceId     = doc["device_id"].as<String>();
-  config.gcUrl        = doc["gc_url"].as<String>();
-  config.gcPath       = doc["gc_path"].as<String>();
-  config.gcPort       = doc["gc_port"] | 443;
-  config.gcUser             = doc["gc_user"].as<String>();
-  config.gcPass             = doc["gc_pass"].as<String>();
-  config.encoderSensitivity = doc["encoder_sensitivity"] | 3;
-  return true;
+void loadConfig() {
+  config.wifiSsid           = WIFI_SSID;
+  config.wifiPassword       = WIFI_PASSWORD;
+  config.deviceId           = DEVICE_ID;
+  config.gcUrl              = GC_HOST;
+  config.gcPath             = GC_PATH;
+  config.gcPort             = GC_PORT;
+  config.gcUser             = GC_USER;
+  config.gcPass             = GC_PASS;
+  config.encoderSensitivity = ENCODER_SENSITIVITY;
 }
 
 void parseMenuItems(JsonArray arr, std::vector<MenuItem>& items) {
@@ -129,12 +178,13 @@ void parseMenuItems(JsonArray arr, std::vector<MenuItem>& items) {
 }
 
 bool loadItems() {
-  File f = LittleFS.open("/items.json", "r");
-  if (!f) return false;
   DynamicJsonDocument doc(16384);
-  DeserializationError err = deserializeJson(doc, f);
-  f.close();
-  if (err) return false;
+  DeserializationError err = deserializeJson(doc, ITEMS_JSON);
+  if (err) {
+    Serial.print("items parse error: ");
+    Serial.println(err.c_str());
+    return false;
+  }
   metricName = doc["metric"].as<String>();
   parseMenuItems(doc["items"].as<JsonArray>(), rootItems);
   return !rootItems.empty();
@@ -170,6 +220,15 @@ bool sendMetric() {
 
 // ─── Display ──────────────────────────────────────────────────────────────────
 
+// Colours — use color888() to ensure correct conversion for the sprite colour depth
+#define CLR_ERROR   M5Dial.Display.color888(200,   0,   0)
+#define CLR_OK      M5Dial.Display.color888(  0, 160,   0)
+#define CLR_INFO    M5Dial.Display.color888(  0,   0, 120)
+#define CLR_NEUTRAL M5Dial.Display.color888( 60,  60,  60)
+#define CLR_BRANCH  M5Dial.Display.color888(  0,   0,  80)
+#define CLR_LEAF    M5Dial.Display.color888(  0,  80,   0)
+#define CLR_BACK    M5Dial.Display.color888( 50,  50,  50)
+
 void showStatus(const String& msg, uint32_t bg) {
   int w = M5Dial.Display.width();
   int h = M5Dial.Display.height();
@@ -178,7 +237,7 @@ void showStatus(const String& msg, uint32_t bg) {
   canvas.createSprite(w, h);
   canvas.fillSprite(bg);
   canvas.setFont(&fonts::Orbitron_Light_24);
-  canvas.setTextColor(TFT_WHITE);
+  canvas.setTextColor(M5Dial.Display.color888(255, 255, 255));
   canvas.setTextDatum(middle_center);
   canvas.drawString(msg, w / 2, h / 2);
   canvas.pushSprite(0, 0);
@@ -187,7 +246,7 @@ void showStatus(const String& msg, uint32_t bg) {
 
 void displayCurrentItem() {
   if (!currentItems || totalItems() == 0) {
-    showStatus("No items", TFT_RED);
+    showStatus("No items", CLR_ERROR);
     return;
   }
 
@@ -201,7 +260,7 @@ void displayCurrentItem() {
   String name = back ? "< Back" : (*currentItems)[currentIndex].displayName;
 
   String imgPath = "";
-  if (!back) {
+  if (!back && imagesAvailable) {
     String imgFile = (*currentItems)[currentIndex].image;
     if (imgFile.length() > 0) {
       imgPath = "/images/" + imgFile;
@@ -233,23 +292,22 @@ void displayCurrentItem() {
   }
 
   if (!imgDrawn) {
-    uint32_t bg = back ? (uint32_t)TFT_DARKGREY
-                       : (leaf ? (uint32_t)TFT_DARKGREEN : (uint32_t)TFT_NAVY);
+    uint32_t bg = back ? CLR_BACK : (leaf ? CLR_LEAF : CLR_BRANCH);
     canvas.fillSprite(bg);
   }
 
   // Solid bar at bottom so text is always readable
-  canvas.fillRect(0, h - 56, w, 56, TFT_BLACK);
+  canvas.fillRect(0, h - 56, w, 56, M5Dial.Display.color888(0, 0, 0));
 
   // Item name
   canvas.setFont(&fonts::Orbitron_Light_24);
-  canvas.setTextColor(TFT_WHITE);
+  canvas.setTextColor(M5Dial.Display.color888(255, 255, 255));
   canvas.setTextDatum(bottom_center);
   canvas.drawString(name, cx, h - 8);
 
   // Position indicator at top
   canvas.setFont(&fonts::Font2);
-  canvas.setTextColor(TFT_WHITE);
+  canvas.setTextColor(M5Dial.Display.color888(255, 255, 255));
   canvas.setTextDatum(top_center);
   canvas.drawString(String(currentIndex + 1) + "/" + String(totalItems()), cx, 8);
 
@@ -271,26 +329,28 @@ void setup() {
   M5Dial.begin(cfg, true, false);
   display.begin();
 
-  if (!LittleFS.begin()) {
-    showStatus("FS Error", TFT_RED);
-    while (true) delay(1000);
-  }
-
-  if (!loadConfig()) {
-    showStatus("Config err", TFT_RED);
-    while (true) delay(1000);
-  }
+  loadConfig();
 
   if (!loadItems()) {
-    showStatus("Items err", TFT_RED);
+    Serial.println("items parse failed");
+    showStatus("Items err", CLR_ERROR);
     while (true) delay(1000);
+  }
+  Serial.println("Items loaded OK");
+
+  // LittleFS — optional, used only for images. Failure is non-fatal.
+  if (LittleFS.begin(true)) {
+    imagesAvailable = true;
+    Serial.println("LittleFS mounted — images enabled");
+  } else {
+    Serial.println("LittleFS unavailable — images disabled");
   }
 
   // Show device ID briefly so the operator knows which unit this is
-  showStatus(config.deviceId, TFT_DARKGREY);
+  showStatus(config.deviceId, CLR_NEUTRAL);
   delay(3000);
 
-  showStatus("Connecting", TFT_NAVY);
+  showStatus("Connecting", CLR_INFO);
 
   transport.setUseTls(true);
   transport.setCerts(grafanaCert, strlen(grafanaCert));
@@ -300,7 +360,7 @@ void setup() {
 
   if (!transport.begin()) {
     Serial.println(transport.errmsg);
-    showStatus("WiFi fail!", TFT_RED);
+    showStatus("WiFi fail!", CLR_ERROR);
     while (true) delay(1000);
   }
 
@@ -312,11 +372,11 @@ void setup() {
   client.setDebug(Serial);
 
   if (!client.begin()) {
-    showStatus("Client err", TFT_RED);
+    showStatus("Client err", CLR_ERROR);
     while (true) delay(1000);
   }
 
-  showStatus("Connected!", TFT_DARKGREEN);
+  showStatus("Connected!", CLR_OK);
   M5Dial.Speaker.tone(8000, 200);
   delay(3000);
 
@@ -344,12 +404,12 @@ void loop() {
       navigateBack();
       displayCurrentItem();
     } else if (isLeafItem(currentIndex)) {
-      showStatus("Sending...", TFT_NAVY);
+      showStatus("Sending...", CLR_INFO);
       if (sendMetric()) {
-        showStatus("Thanks!", TFT_DARKGREEN);
+        showStatus("Thanks!", CLR_OK);
         M5Dial.Speaker.tone(8000, 300);
       } else {
-        showStatus("Error!", TFT_RED);
+        showStatus("Error!", CLR_ERROR);
       }
       delay(2000);
       navigateToRoot();

@@ -6,6 +6,13 @@ FQBN="esp32:esp32:m5stack_dial"
 BOARD_URL="https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json"
 SKETCH_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# arduino-cli stores packages under ~/Library/Arduino15 on macOS and $ARDUINO15 elsewhere
+if [[ -d "$HOME/Library/Arduino15" ]]; then
+  ARDUINO15="$HOME/Library/Arduino15"
+else
+  ARDUINO15="$HOME/.arduino15"
+fi
+
 usage() {
   cat <<EOF
 Usage: $(basename "$0") <command> [options]
@@ -108,12 +115,12 @@ cmd_data_flash() {
 
   echo "==> Locating build tools..."
 
-  # mklittlefs is bundled with the ESP32 core
-  local mklfs
-  mklfs=$(find ~/.arduino15/packages/esp32/tools/mklittlefs \
-    -name "mklittlefs" -type f 2>/dev/null | sort -V | tail -1)
-  if [[ -z "$mklfs" ]]; then
-    echo "Error: mklittlefs not found. Run ./build.sh setup first."
+  # mkspiffs is bundled with the ESP32 core
+  local mkspiffs
+  mkspiffs=$(find $ARDUINO15/packages/esp32/tools/mkspiffs \
+    -name "mkspiffs" -type f 2>/dev/null | sort -V | tail -1)
+  if [[ -z "$mkspiffs" ]]; then
+    echo "Error: mkspiffs not found. Run ./build.sh setup first."
     exit 1
   fi
 
@@ -125,7 +132,7 @@ cmd_data_flash() {
     esptool_cmd=(esptool)
   else
     local esptool_bin
-    esptool_bin=$(find ~/.arduino15/packages/esp32/tools/esptool_py \
+    esptool_bin=$(find $ARDUINO15/packages/esp32/tools/esptool_py \
       -name "esptool" -not -name "*.py" -type f 2>/dev/null | sort -V | tail -1)
     if [[ -n "$esptool_bin" ]]; then
       esptool_cmd=("$esptool_bin")
@@ -135,14 +142,14 @@ cmd_data_flash() {
     fi
   fi
 
-  echo "    mklittlefs: $mklfs"
+  echo "    mkspiffs:   $mkspiffs"
   echo "    esptool:    ${esptool_cmd[*]}"
 
   # Locate the partition CSV for this board via boards.txt
   echo "==> Looking up partition table for $FQBN..."
   local board_name="${FQBN##*:}"
   local hw_dir
-  hw_dir=$(find ~/.arduino15/packages/esp32/hardware/esp32 \
+  hw_dir=$(find $ARDUINO15/packages/esp32/hardware/esp32 \
     -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort -V | tail -1)
   if [[ -z "$hw_dir" ]]; then
     echo "Error: ESP32 hardware directory not found. Run ./build.sh setup first."
@@ -176,14 +183,14 @@ cmd_data_flash() {
   size=$(echo "$part_line"   | awk -F',' '{gsub(/ /,""); print $5}')
   echo "    offset:     $offset  size: $size"
 
-  # Build the LittleFS image
-  local img="$SKETCH_DIR/littlefs.bin"
-  echo "==> Building LittleFS image from $data_dir..."
-  "$mklfs" -c "$data_dir" -s "$size" -b 4096 -p 256 "$img"
+  # Build the SPIFFS image
+  local img="$SKETCH_DIR/spiffs.bin"
+  echo "==> Building SPIFFS image from $data_dir..."
+  "$mkspiffs" -c "$data_dir" -s "$size" -b 4096 -p 256 "$img"
 
   # Flash
   echo "==> Flashing filesystem to $port..."
-  "${esptool_cmd[@]}" --port "$port" write_flash "$offset" "$img"
+  "${esptool_cmd[@]}" --port "$port" write-flash "$offset" "$img"
 
   echo "==> Filesystem upload complete."
 }
