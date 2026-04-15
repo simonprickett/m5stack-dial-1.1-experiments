@@ -2,6 +2,7 @@
 #include "certificates.h"
 #include "config_local.h"
 #include "images/tshirt_jpg.h"
+#include "images/sticker_jpg.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <PromLokiTransport.h>
@@ -12,26 +13,6 @@
 static const char ITEMS_JSON[] = R"({
   "metric": "gcon_swag",
   "items": [
-    {
-      "label_key": "category",
-      "label_value": "tshirt",
-      "display_name": "T-Shirt",
-      "image": "tshirt.jpg",
-      "children": [
-        {
-          "label_key": "design",
-          "label_value": "logo",
-          "display_name": "Logo",
-          "image": "tshirt_logo.jpg",
-          "children": [
-            { "label_key": "size", "label_value": "s",  "display_name": "Small"   },
-            { "label_key": "size", "label_value": "m",  "display_name": "Medium"  },
-            { "label_key": "size", "label_value": "l",  "display_name": "Large"   },
-            { "label_key": "size", "label_value": "xl", "display_name": "X-Large" }
-          ]
-        }
-      ]
-    },
     {
       "label_key": "category",
       "label_value": "sticker",
@@ -56,6 +37,26 @@ static const char ITEMS_JSON[] = R"({
             { "label_key": "item", "label_value": "sunglasses", "display_name": "Sunglasses" },
             { "label_key": "item", "label_value": "guitar",     "display_name": "Guitar"     },
             { "label_key": "item", "label_value": "lgbt",       "display_name": "LGBT"       }
+          ]
+        }
+      ]
+    },
+    {
+      "label_key": "category",
+      "label_value": "tshirt",
+      "display_name": "T-Shirt",
+      "image": "tshirt.jpg",
+      "children": [
+        {
+          "label_key": "design",
+          "label_value": "logo",
+          "display_name": "Logo",
+          "image": "tshirt_logo.jpg",
+          "children": [
+            { "label_key": "size", "label_value": "s",  "display_name": "Small"   },
+            { "label_key": "size", "label_value": "m",  "display_name": "Medium"  },
+            { "label_key": "size", "label_value": "l",  "display_name": "Large"   },
+            { "label_key": "size", "label_value": "xl", "display_name": "X-Large" }
           ]
         }
       ]
@@ -331,7 +332,8 @@ struct ImageAsset {
 };
 
 static const ImageAsset IMAGE_ASSETS[] = {
-  { "/images/tshirt.jpg", tshirt_jpg, tshirt_jpg_len },
+  { "/images/tshirt.jpg",   tshirt_jpg,   tshirt_jpg_len   },
+  { "/images/sticker.jpg",  sticker_jpg,  sticker_jpg_len  },
 };
 
 void provisionImages() {
