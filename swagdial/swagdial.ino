@@ -312,7 +312,7 @@ void displayCurrentItem() {
 
   if (back) {
     const ImageAsset* asset = findImage("back.jpg");
-    if (asset) canvas.drawJpg(asset->data, asset->len, 0, 0, w, h, 0, 0, 0.7f, 0.7f, middle_center);
+    if (asset) canvas.drawJpg(asset->data, asset->len, 0, -13, w, h, 0, 0, 0.7f, 0.7f, middle_center);
   } else {
     // Try item's own image, fall back to top-level category image if not found
     String imgName = (*currentItems)[currentIndex].image;
@@ -321,11 +321,11 @@ void displayCurrentItem() {
       imgName = (*navStack[0].items)[navStack[0].selectedIndex].image;
       asset = imgName.length() > 0 ? findImage(imgName) : nullptr;
     }
-    if (asset) canvas.drawJpg(asset->data, asset->len, 0, 0, w, h, 0, 0, 0.7f, 0.7f, middle_center);
+    if (asset) canvas.drawJpg(asset->data, asset->len, 0, -13, w, h, 0, 0, 0.7f, 0.7f, middle_center);
   }
 
   // Solid bar at bottom so text is always readable
-  canvas.fillRect(0, h - 56, w, 56, M5Dial.Display.color888(16, 24, 48));
+  canvas.fillRect(0, h - 47, w, 47, M5Dial.Display.color888(16, 24, 48));
 
   // Item name — shrink slightly for longer strings so they fit
   canvas.setFont(&fonts::Orbitron_Light_24);
