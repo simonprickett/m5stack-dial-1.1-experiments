@@ -8,6 +8,7 @@
 #include "images/crochet_jpg.h"
 #include "images/keychain_jpg.h"
 #include "images/coin_jpg.h"
+#include "images/back_jpg.h"
 #include <ArduinoJson.h>
 #include <PromLokiTransport.h>
 #include <PrometheusArduino.h>
@@ -124,6 +125,7 @@ static const ImageAsset IMAGE_ASSETS[] = {
   { "crochet.jpg",  crochet_jpg,  crochet_jpg_len  },
   { "keychain.jpg", keychain_jpg, keychain_jpg_len },
   { "coin.jpg",     coin_jpg,     coin_jpg_len     },
+  { "back.jpg",     back_jpg,     back_jpg_len     },
 };
 
 static const ImageAsset* findImage(const String& name) {
@@ -307,7 +309,13 @@ void displayCurrentItem() {
   canvas.createSprite(w, h);
 
   bool imgDrawn = false;
-  if (!back) {
+  if (back) {
+    const ImageAsset* asset = findImage("back.jpg");
+    if (asset) {
+      canvas.drawJpg(asset->data, asset->len, 0, 0, w, h, 0, 0, 0.7f, 0.7f, middle_center);
+      imgDrawn = true;
+    }
+  } else {
     // Try item's own image, fall back to top-level category image if not found
     String imgName = (*currentItems)[currentIndex].image;
     const ImageAsset* asset = imgName.length() > 0 ? findImage(imgName) : nullptr;
@@ -327,7 +335,7 @@ void displayCurrentItem() {
   }
 
   // Solid bar at bottom so text is always readable
-  canvas.fillRect(0, h - 56, w, 56, M5Dial.Display.color888(0, 0, 0));
+  canvas.fillRect(0, h - 56, w, 56, M5Dial.Display.color888(16, 24, 48));
 
   // Item name — shrink slightly for longer strings so they fit
   canvas.setFont(&fonts::Orbitron_Light_24);
