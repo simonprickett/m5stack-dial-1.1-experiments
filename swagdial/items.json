@@ -3,60 +3,15 @@
   "items": [
     {
       "label_key": "category",
-      "label_value": "sticker",
-      "display_name": "Sticker",
-      "image": "sticker.jpg",
+      "label_value": "coffee",
+      "display_name": "Coffee",
+      "image": "coffee.jpg",
       "children": [
-        {
-          "label_key": "design",
-          "label_value": "logos",
-          "display_name": "Logos",
-          "children": [
-            { "label_key": "item", "label_value": "mimir",   "display_name": "Mimir",   "image": "sticker_logos_mimir.jpg"   },
-            { "label_key": "item", "label_value": "grafana", "display_name": "Grafana", "image": "sticker_logos_grafana.jpg" },
-            { "label_key": "item", "label_value": "tempo",   "display_name": "Tempo",   "image": "sticker_logos_tempo.jpg"   }
-          ]
-        },
-        {
-          "label_key": "design",
-          "label_value": "grot",
-          "display_name": "Grot",
-          "children": [
-            { "label_key": "item", "label_value": "sunglasses", "display_name": "Sunglasses" },
-            { "label_key": "item", "label_value": "guitar",     "display_name": "Guitar"     },
-            { "label_key": "item", "label_value": "lgbt",       "display_name": "LGBT"       }
-          ]
-        }
-      ]
-    },
-    {
-      "label_key": "category",
-      "label_value": "tshirt",
-      "display_name": "T-Shirt",
-      "image": "tshirt.jpg",
-      "children": [
-        {
-          "label_key": "design",
-          "label_value": "logo",
-          "display_name": "Logo",
-          "image": "tshirt_logo.jpg",
-          "children": [
-            { "label_key": "size", "label_value": "s",  "display_name": "Small"   },
-            { "label_key": "size", "label_value": "m",  "display_name": "Medium"  },
-            { "label_key": "size", "label_value": "l",  "display_name": "Large"   },
-            { "label_key": "size", "label_value": "xl", "display_name": "X-Large" }
-          ]
-        }
-      ]
-    },
-    {
-      "label_key": "category",
-      "label_value": "patch",
-      "display_name": "Patch",
-      "image": "patch.jpg",
-      "children": [
-        { "label_key": "type", "label_value": "contributor", "display_name": "Contributor", "image": "patch.jpg" },
-        { "label_key": "type", "label_value": "champion",    "display_name": "Champion",    "image": "patch.jpg" }
+        { "label_key": "drink", "label_value": "americano",  "display_name": "Americano",  "image": "coffee.jpg" },
+        { "label_key": "drink", "label_value": "cappuccino", "display_name": "Cappuccino", "image": "coffee.jpg" },
+        { "label_key": "drink", "label_value": "espresso",   "display_name": "Espresso",   "image": "coffee.jpg" },
+        { "label_key": "drink", "label_value": "latte",      "display_name": "Latte",      "image": "coffee.jpg" },
+        { "label_key": "drink", "label_value": "mocha",      "display_name": "Mocha",      "image": "coffee.jpg" }
       ]
     },
     {
@@ -67,31 +22,89 @@
     },
     {
       "label_key": "category",
-      "label_value": "keychain",
-      "display_name": "Keychain",
-      "image": "keychain.jpg",
-      "children": [
-        { "label_key": "design", "label_value": "logo", "display_name": "Logo", "image": "keychain.jpg" },
-        { "label_key": "design", "label_value": "doom", "display_name": "Doom", "image": "keychain.jpg" }
-      ]
-    },
-    {
-      "label_key": "category",
       "label_value": "crochet",
       "display_name": "Crochet",
       "image": "crochet.jpg"
     },
     {
       "label_key": "category",
-      "label_value": "coffee",
-      "display_name": "Coffee",
-      "image": "coffee.jpg",
+      "label_value": "keychain",
+      "display_name": "Keychain",
+      "image": "keychain.jpg",
       "children": [
-        { "label_key": "drink", "label_value": "americano",  "display_name": "Americano",  "image": "coffee.jpg" },
-        { "label_key": "drink", "label_value": "latte",      "display_name": "Latte",      "image": "coffee.jpg" },
-        { "label_key": "drink", "label_value": "espresso",   "display_name": "Espresso",   "image": "coffee.jpg" },
-        { "label_key": "drink", "label_value": "cappuccino", "display_name": "Cappuccino", "image": "coffee.jpg" },
-        { "label_key": "drink", "label_value": "mocha",      "display_name": "Mocha",      "image": "coffee.jpg" }
+        { "label_key": "design", "label_value": "doom", "display_name": "Doom", "image": "keychain.jpg" },
+        { "label_key": "design", "label_value": "logo", "display_name": "Logo", "image": "keychain.jpg" }
+      ]
+    },
+    {
+      "label_key": "category",
+      "label_value": "patch",
+      "display_name": "Patch",
+      "image": "patch.jpg",
+      "children": [
+        { "label_key": "type", "label_value": "champion",    "display_name": "Champion",    "image": "patch.jpg" },
+        { "label_key": "type", "label_value": "contributor", "display_name": "Contributor", "image": "patch.jpg" }
+      ]
+    },
+    {
+      "label_key": "category",
+      "label_value": "sticker",
+      "display_name": "Sticker",
+      "image": "sticker.jpg",
+      "children": [
+        {
+          "label_key": "design",
+          "label_value": "grafanacon",
+          "display_name": "GrafanaCon"
+        },
+        {
+          "label_key": "design",
+          "label_value": "grot",
+          "display_name": "Grot",
+          "children": [
+            { "label_key": "item", "label_value": "book",    "display_name": "Book"    },
+            { "label_key": "item", "label_value": "hoodie",  "display_name": "Hoodie"  },
+            { "label_key": "item", "label_value": "laptop",  "display_name": "Laptop"  },
+            { "label_key": "item", "label_value": "meetups", "display_name": "Meetups" },
+            { "label_key": "item", "label_value": "outline", "display_name": "Outline" },
+            { "label_key": "item", "label_value": "plant",   "display_name": "Plant"   }
+          ]
+        },
+        {
+          "label_key": "design",
+          "label_value": "logos",
+          "display_name": "Logos",
+          "children": [
+            { "label_key": "item", "label_value": "grafana",   "display_name": "Grafana"   },
+            { "label_key": "item", "label_value": "k6",        "display_name": "K6"        },
+            { "label_key": "item", "label_value": "loki",      "display_name": "Loki"      },
+            { "label_key": "item", "label_value": "mimir",     "display_name": "Mimir"     },
+            { "label_key": "item", "label_value": "otel",      "display_name": "OTel"      },
+            { "label_key": "item", "label_value": "pyroscope", "display_name": "Pyroscope" },
+            { "label_key": "item", "label_value": "tempo",     "display_name": "Tempo"     }
+          ]
+        },
+        {
+          "label_key": "design",
+          "label_value": "sci_fair",
+          "display_name": "Sci Fair",
+          "children": [
+            { "label_key": "item", "label_value": "doom",     "display_name": "Doom"     },
+            { "label_key": "item", "label_value": "lab_coat", "display_name": "Lab Coat" }
+          ]
+        }
+      ]
+    },
+    {
+      "label_key": "category",
+      "label_value": "tshirt",
+      "display_name": "T-Shirt",
+      "image": "tshirt.jpg",
+      "children": [
+        { "label_key": "design", "label_value": "football",    "display_name": "Football"    },
+        { "label_key": "design", "label_value": "grot",        "display_name": "Grot"        },
+        { "label_key": "design", "label_value": "logo",        "display_name": "Logo"        },
+        { "label_key": "design", "label_value": "logo_mosaic", "display_name": "Logo Mosaic" }
       ]
     }
   ]
