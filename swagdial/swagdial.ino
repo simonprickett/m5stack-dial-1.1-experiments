@@ -1,6 +1,6 @@
 #include "M5Dial.h"
 #include "certificates.h"
-#include "config_local.h"
+#include "config.h"
 #include "images/tshirt_jpg.h"
 #include "images/sticker_jpg.h"
 #include "images/coffee_jpg.h"

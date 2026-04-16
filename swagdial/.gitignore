@@ -1,5 +1,5 @@
 config.json
 data/config.json
-config_local.h
+config.h
 spiffs.bin
 littlefs.bin
