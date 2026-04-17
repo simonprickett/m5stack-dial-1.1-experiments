@@ -1200,7 +1200,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "fixedColor": "blue",
+            "mode": "fixed"
           },
           "custom": {
             "axisBorderShow": false,
@@ -1258,7 +1259,7 @@
           "placement": "bottom",
           "showLegend": false
         },
-        "orientation": "horizontal",
+        "orientation": "vertical",
         "showValue": "never",
         "stacking": "none",
         "tooltip": {
@@ -2101,7 +2102,7 @@
   },
   "timezone": "utc",
   "title": "GrafanaCon26 Swag Tracker",
-  "version": 9,
+  "version": 10,
   "uid": "sihtr2m",
   "id": 479650172186624
 }
