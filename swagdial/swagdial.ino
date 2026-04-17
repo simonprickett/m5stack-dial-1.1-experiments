@@ -8,6 +8,7 @@
 #include "images/crochet_jpg.h"
 #include "images/keychain_jpg.h"
 #include "images/coin_jpg.h"
+#include "images/socks_jpg.h"
 #include "images/back_jpg.h"
 #include <ArduinoJson.h>
 #include <PromLokiTransport.h>
@@ -63,6 +64,12 @@ static const char ITEMS_JSON[] = R"({
         { "label_key": "type", "label_value": "champion",    "display_name": "Champion",    "image": "patch.jpg" },
         { "label_key": "type", "label_value": "contributor", "display_name": "Contributor", "image": "patch.jpg" }
       ]
+    },
+    {
+      "label_key": "category",
+      "label_value": "socks",
+      "display_name": "Socks",
+      "image": "socks.jpg"
     },
     {
       "label_key": "category",
@@ -138,6 +145,7 @@ static const ImageAsset IMAGE_ASSETS[] = {
   { "crochet.jpg",  crochet_jpg,  crochet_jpg_len  },
   { "keychain.jpg", keychain_jpg, keychain_jpg_len },
   { "coin.jpg",     coin_jpg,     coin_jpg_len     },
+  { "socks.jpg",    socks_jpg,    socks_jpg_len    },
   { "back.jpg",     back_jpg,     back_jpg_len     },
 };
 

@@ -48,6 +48,12 @@
     },
     {
       "label_key": "category",
+      "label_value": "socks",
+      "display_name": "Socks",
+      "image": "socks.jpg"
+    },
+    {
+      "label_key": "category",
       "label_value": "sticker",
       "display_name": "Sticker",
       "image": "sticker.jpg",
