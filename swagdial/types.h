@@ -28,7 +28,6 @@ struct NavFrame {
 };
 
 struct ImageAsset {
-  const char*          name;
-  const unsigned char* data;
-  unsigned int         len;
+  const char*     name;
+  const uint16_t* data;
 };

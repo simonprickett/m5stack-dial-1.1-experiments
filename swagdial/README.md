@@ -8,7 +8,9 @@ Attendees use the rotary encoder to navigate a configurable item hierarchy (e.g.
 
 ## Hardware
 
-- M5Stack Dial 1.1
+- M5Stack Dial 1.1 (ESP32-S3, 8 MB flash, 240×240 round GC9A01 display)
+
+---
 
 ## Building and flashing
 
@@ -28,24 +30,14 @@ Installs the ESP32 board package and all required libraries:
 ./build.sh setup
 ```
 
-This installs:
-
 | Library | Version |
 |---|---|
 | ESP32 Arduino core (Espressif) | latest |
-| M5Unified (M5Stack board + display support) | latest |
+| M5Unified | latest |
 | M5GFX | latest |
 | ArduinoJson | 6.21.6 (pinned — v7 has breaking API changes) |
 | PrometheusArduino | latest |
 | PromLokiTransport | latest |
-
-After setup, confirm the board name resolves correctly:
-
-```bash
-arduino-cli board listall | grep -i dial
-```
-
-The script uses `FQBN=esp32:esp32:m5stack_dial` — update the variable at the top of `build.sh` if your board is listed under a different name.
 
 ### Compile
 
@@ -53,7 +45,7 @@ The script uses `FQBN=esp32:esp32:m5stack_dial` — update the variable at the t
 ./build.sh build
 ```
 
-### Flash the sketch
+### Flash
 
 Connect the M5Dial via USB and find its port:
 
@@ -61,15 +53,13 @@ Connect the M5Dial via USB and find its port:
 arduino-cli board list
 ```
 
-Then compile and flash in one step:
+Then compile and flash:
 
 ```bash
 ./build.sh flash /dev/cu.usbmodem101
 ```
 
 ### Serial monitor
-
-Watch connection status and error output:
 
 ```bash
 ./build.sh monitor /dev/cu.usbmodem101
@@ -79,7 +69,7 @@ Watch connection status and error output:
 
 ## Configuration — `config.h`
 
-Copy `config_example.h` to `config.h` and fill in your values. This file is gitignored and must not be committed.
+Edit `config.h` with your WiFi credentials and Grafana Cloud remote write details:
 
 ```cpp
 #define WIFI_SSID            "your_wifi_ssid"
@@ -99,53 +89,35 @@ Copy `config_example.h` to `config.h` and fill in your values. This file is giti
 | `WIFI_PASSWORD` | WiFi password |
 | `DEVICE_ID` | Unique identifier for this device — used as a label on every metric |
 | `GC_HOST` | Grafana Cloud Prometheus remote write hostname (no `https://`) |
-| `GC_PATH` | Grafana Cloud remote write path |
-| `GC_PORT` | Port — 443 for TLS |
+| `GC_PATH` | Remote write path |
+| `GC_PORT` | Port — `443` for TLS |
 | `GC_USER` | Grafana Cloud metrics user ID (numeric) |
 | `GC_PASS` | Grafana Cloud API token with MetricsPublisher role |
 | `ENCODER_SENSITIVITY` | Minimum encoder steps to register a turn. Lower = more sensitive. Default: `2` |
 
-Config is compiled into the firmware — reflash to change it.
+Configuration is compiled into the firmware — reflash to change it.
 
 ---
 
 ## Setting up multiple devices
 
-All devices share the same firmware and configuration except for `DEVICE_ID`, which must be unique per unit so selections can be attributed to a specific device in Grafana.
+All devices share the same firmware except for `DEVICE_ID`, which must be unique per unit so selections can be attributed to a specific device in Grafana.
 
-**Suggested device IDs:** `swagdial-1` through `swagdial-7`.
+For each device:
 
-### Steps for each device
+1. Edit `config.h` — set a unique `DEVICE_ID` (e.g. `"swagdial-2"`).
+2. Connect via USB and find its port: `arduino-cli board list`
+3. Flash: `./build.sh flash /dev/cu.usbmodem101`
+4. Confirm `Connected!` appears on screen and in the serial monitor.
+5. Unplug and repeat for the next unit.
 
-1. Edit `config.h` — set `DEVICE_ID` to this device's ID (e.g. `"swagdial-2"`). All other fields stay the same across units.
-
-2. Connect the device via USB and find its port:
-
-   ```bash
-   arduino-cli board list
-   ```
-
-3. Compile and flash:
-
-   ```bash
-   ./build.sh flash /dev/cu.usbmodem101
-   ```
-
-4. Watch the serial monitor to confirm it connects and shows `Connected!`:
-
-   ```bash
-   ./build.sh monitor /dev/cu.usbmodem101
-   ```
-
-5. Unplug and repeat for the next unit, incrementing the `DEVICE_ID`.
-
-The port name (`/dev/cu.usbmodem101`) may differ each time you plug in a new device — always re-run `arduino-cli board list` to confirm before flashing.
+The port name may change each time you plug in a new device — always re-run `arduino-cli board list` to confirm.
 
 ---
 
 ## Items — `items.json`
 
-Describes the swag hierarchy and the Prometheus labels to emit. `items.json` is the canonical source of truth (safe to commit); its content is also embedded as a string literal in `swagdial.ino` and compiled into the firmware. To change the items, edit both files and reflash.
+Describes the swag hierarchy and the Prometheus labels to emit. `items.json` is the canonical source of truth; its content is also embedded as a string literal in `swagdial.ino` and compiled into the firmware. **To change the items, edit both files and reflash.**
 
 ### Top-level structure
 
@@ -156,14 +128,7 @@ Describes the swag hierarchy and the Prometheus labels to emit. `items.json` is 
 }
 ```
 
-| Field | Description |
-|---|---|
-| `metric` | Prometheus metric name. Per Prometheus convention, use `snake_case` and suffix counters with `_total`. |
-| `items` | Array of top-level menu items (see below). |
-
 ### Item structure
-
-Each item in the hierarchy — at any depth — has the same shape:
 
 ```json
 {
@@ -177,48 +142,20 @@ Each item in the hierarchy — at any depth — has the same shape:
 
 | Field | Required | Description |
 |---|---|---|
-| `label_key` | Yes | Prometheus label name for this level of the hierarchy |
+| `label_key` | Yes | Prometheus label name for this level |
 | `label_value` | Yes | Prometheus label value |
 | `display_name` | Yes | Text shown on screen |
-| `image` | No | JPEG filename (looked up under `/images/` on device flash). Omit or leave empty if no image. |
-| `children` | No | Nested items. Omit on leaf nodes — pressing the button on a leaf records the metric. |
+| `image` | No | Image name as it appears in `IMAGE_ASSETS` in the sketch. Omit if no image. Sub-items without an image inherit the nearest ancestor's image automatically. |
+| `children` | No | Nested items. Omit on leaf nodes. |
 
-Items with `children` are **branch nodes**: pressing the button navigates into them.
-Items without `children` are **leaf nodes**: pressing the button sends the metric.
+Items with `children` are **branch nodes** — pressing the button navigates into them.
+Items without `children` are **leaf nodes** — pressing the button sends the metric.
 
-A **Back** item is automatically added as the last entry at every non-root level, allowing the user to go up one level without making a selection.
+A `< Back` item is automatically added at every non-root level.
 
-### Example
+### Example metric
 
-```json
-{
-  "metric": "gcon_swag",
-  "items": [
-    {
-      "label_key": "category",
-      "label_value": "tshirt",
-      "display_name": "T-Shirt",
-      "image": "tshirt.jpg",
-      "children": [
-        {
-          "label_key": "design",
-          "label_value": "logo",
-          "display_name": "Logo",
-          "image": "tshirt_logo.jpg",
-          "children": [
-            { "label_key": "size", "label_value": "s",  "display_name": "Small"   },
-            { "label_key": "size", "label_value": "m",  "display_name": "Medium"  },
-            { "label_key": "size", "label_value": "l",  "display_name": "Large"   },
-            { "label_key": "size", "label_value": "xl", "display_name": "X-Large" }
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
-
-Selecting "Large Logo T-Shirt" on a device with `device_id = "swagdial-1"` would send:
+Selecting "Large Logo T-Shirt" on a device with `DEVICE_ID="swagdial-1"` sends:
 
 ```
 gcon_swag{device_id="swagdial-1",category="tshirt",design="logo",size="l"} 1
@@ -228,76 +165,59 @@ gcon_swag{device_id="swagdial-1",category="tshirt",design="logo",size="l"} 1
 
 ## Images
 
-Images are embedded directly in the firmware as `const` C byte arrays and drawn straight from flash — no filesystem required.
+Images are stored as pre-decoded raw RGB565 pixel arrays in flash. This means rendering is a direct memory-to-display blit with no runtime heap allocation — image display is reliable regardless of how much heap is available for the WiFi/TLS stack.
 
-- Format: JPEG
-- Required size: 240×240 pixels (the Dial's display is 240×240 round)
-- If an item has no image (or its image isn't in `IMAGE_ASSETS`), the display falls back to the top-level category image; if that's also missing, a plain background is shown
+- Source format: JPEG, 240×240 pixels
+- Stored format: RGB565, 168×168 pixels (70% scale, centred and shifted up 13 px)
+- Location: `images/*_rgb565.h`
+- Conversion tool: `images/convert_to_rgb565.py` (requires Python 3 + Pillow)
 
 ### Adding an image
 
-**1. Download a PNG from [Flaticon](https://www.flaticon.com) or another source.**
-
-Free Flaticon icons require attribution — add a note to your documentation.
-
-**2. Resize and convert to JPEG (built-in macOS tool, no install needed):**
+**1. Prepare a 240×240 JPEG.** Using macOS `sips`:
 
 ```bash
-sips -z 240 240 -s format jpeg tshirt.png --out tshirt.jpg
+sips -z 240 240 -s format jpeg input.png --out tshirt.jpg
 ```
 
-**3. Convert the JPEG to a C header file:**
+**2. Generate the JPEG header with `xxd`:**
 
 ```bash
-xxd -i tshirt.jpg > swagdial/images/tshirt_jpg.h
+xxd -i tshirt.jpg > images/tshirt_jpg.h
 ```
 
-**4. Edit the generated header — change `unsigned char` to `const unsigned char` on both lines:**
+Edit the generated file — change `unsigned char` to `const unsigned char` on both the array and length lines.
+
+**3. Run the conversion script to produce the RGB565 header:**
+
+```bash
+cd images
+python3 convert_to_rgb565.py
+```
+
+This reads all `*_jpg.h` files in the `images/` directory and regenerates all `*_rgb565.h` files. The script requires Pillow (`pip3 install Pillow`).
+
+**4. Include the RGB565 header in `swagdial.ino`:**
 
 ```cpp
-// before
-unsigned char tshirt_jpg[] = { ... };
-unsigned int tshirt_jpg_len = 9923;
-
-// after
-const unsigned char tshirt_jpg[] = { ... };
-const unsigned int tshirt_jpg_len = 9923;
+#include "images/tshirt_rgb565.h"
 ```
 
-This is required so the linker places the data in flash rather than SRAM. Without `const`, large images will exhaust the heap and prevent WiFi from connecting.
-
-**5. Include the header in `swagdial.ino`:**
-
-```cpp
-#include "images/tshirt_jpg.h"
-```
-
-**6. Add an entry to the `IMAGE_ASSETS` array in `swagdial.ino`:**
+**5. Add an entry to `IMAGE_ASSETS` in `swagdial.ino`:**
 
 ```cpp
 static const ImageAsset IMAGE_ASSETS[] = {
-  { "tshirt.jpg", tshirt_jpg, tshirt_jpg_len },
-  // add more here
+  { "tshirt.jpg", tshirt_rgb565 },
+  // ...
 };
 ```
 
-The variable names (`tshirt_jpg`, `tshirt_jpg_len`) are generated by `xxd` from the filename — `xxd -i foo_bar.jpg` produces `foo_bar_jpg` and `foo_bar_jpg_len`.
+**6. Reference the image name in `items.json` and the embedded `ITEMS_JSON` string literal in `swagdial.ino`.**
 
-**7. Flash the sketch:**
+**7. Flash:**
 
 ```bash
 ./build.sh flash /dev/cu.usbmodem101
-```
-
-### Naming convention
-
-Use names that mirror the hierarchy for clarity:
-
-```
-tshirt.jpg
-tshirt_logo.jpg
-sticker.jpg
-sticker_logos_mimir.jpg
 ```
 
 ---
@@ -310,43 +230,35 @@ sticker_logos_mimir.jpg
 |---|---|
 | Rotate encoder | Scroll through items at the current level |
 | Press button on a branch item (shows `>`) | Navigate into that item's children |
-| Press button on a leaf item | Record the selection and return to root |
+| Press button on a leaf item | Send the metric and return to root |
 | Press button on `< Back` | Go up one level |
 
 ### Display
 
-- **Blue background** — branch item (has sub-items)
-- **Green background** — leaf item (press to select)
-- **Grey background** — Back item
-- Position indicator (e.g. `2/4`) is shown at the top of the screen
-- If an image is defined and found, it fills the display with a black text bar at the bottom
+- Item name in **white** — branch node (press to enter)
+- Item name in **orange** — leaf node (press to submit)
+- Position indicator (e.g. `2/4`) at the top of the screen
+- `>` on the right edge indicates a branch node
+- Image fills the display behind a navy bar at the bottom containing the item name
 
 ---
 
 ## Metric design
 
-Every selection sends a single sample with value `1` to the configured remote write endpoint. No counters are stored on the device — aggregation is handled server-side by Mimir.
+Every selection sends a single sample with value `1`. Labels:
 
-Labels on each metric point:
+- `device_id` — from `config.h`
+- One label per level of the hierarchy navigated, using the `label_key`/`label_value` pairs from `items.json`
 
-- `device_id` — from `config.h`, identifies which physical device recorded the event
-- One label per level of the hierarchy the user navigated, using the `label_key`/`label_value` pairs from `items.json`
-
-This structure supports queries like:
+Example queries:
 
 ```promql
-# Total selections across all devices and items
+# Total selections across all devices
 sum(increase(gcon_swag[$__range]))
 
-# All t-shirt selections, any design or size
+# T-shirt selections only
 sum(increase(gcon_swag{category="tshirt"}[$__range]))
 
-# Logo t-shirts only, any size
-sum(increase(gcon_swag{category="tshirt",design="logo"}[$__range]))
-
-# Large items only
-sum(increase(gcon_swag{size="l"}[$__range]))
-
-# Selections over time, broken down by category
+# Selections over time by category
 sum by (category) (rate(gcon_swag[$__rate_interval]))
 ```

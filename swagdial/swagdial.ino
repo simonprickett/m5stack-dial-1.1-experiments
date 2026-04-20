@@ -1,15 +1,15 @@
 #include "M5Dial.h"
 #include "certificates.h"
 #include "config.h"
-#include "images/tshirt_jpg.h"
-#include "images/sticker_jpg.h"
-#include "images/coffee_jpg.h"
-#include "images/patch_jpg.h"
-#include "images/crochet_jpg.h"
-#include "images/keychain_jpg.h"
-#include "images/coin_jpg.h"
-#include "images/socks_jpg.h"
-#include "images/back_jpg.h"
+#include "images/tshirt_rgb565.h"
+#include "images/sticker_rgb565.h"
+#include "images/coffee_rgb565.h"
+#include "images/patch_rgb565.h"
+#include "images/crochet_rgb565.h"
+#include "images/keychain_rgb565.h"
+#include "images/coin_rgb565.h"
+#include "images/socks_rgb565.h"
+#include "images/back_rgb565.h"
 #include <ArduinoJson.h>
 #include <PromLokiTransport.h>
 #include <PrometheusArduino.h>
@@ -138,16 +138,17 @@ static const char ITEMS_JSON[] = R"({
 // ─── Image assets ─────────────────────────────────────────────────────────────
 
 static const ImageAsset IMAGE_ASSETS[] = {
-  { "tshirt.jpg",   tshirt_jpg,   tshirt_jpg_len   },
-  { "sticker.jpg",  sticker_jpg,  sticker_jpg_len  },
-  { "coffee.jpg",   coffee_jpg,   coffee_jpg_len   },
-  { "patch.jpg",    patch_jpg,    patch_jpg_len    },
-  { "crochet.jpg",  crochet_jpg,  crochet_jpg_len  },
-  { "keychain.jpg", keychain_jpg, keychain_jpg_len },
-  { "coin.jpg",     coin_jpg,     coin_jpg_len     },
-  { "socks.jpg",    socks_jpg,    socks_jpg_len    },
-  { "back.jpg",     back_jpg,     back_jpg_len     },
+  { "tshirt.jpg",   tshirt_rgb565   },
+  { "sticker.jpg",  sticker_rgb565  },
+  { "coffee.jpg",   coffee_rgb565   },
+  { "patch.jpg",    patch_rgb565    },
+  { "crochet.jpg",  crochet_rgb565  },
+  { "keychain.jpg", keychain_rgb565 },
+  { "coin.jpg",     coin_rgb565     },
+  { "socks.jpg",    socks_rgb565    },
+  { "back.jpg",     back_rgb565     },
 };
+
 
 static const ImageAsset* findImage(const String& name) {
   for (auto& asset : IMAGE_ASSETS) {
@@ -166,8 +167,6 @@ std::vector<MenuItem>* currentItems = nullptr;
 int                    currentIndex  = 0;
 long                   lastEncoderPos = 0;
 
-M5GFX             display;
-M5Canvas          canvas(&display);
 PromLokiTransport transport;
 PromClient        client(transport);
 
@@ -271,6 +270,7 @@ String buildLabels() {
 }
 
 bool sendMetric() {
+  Serial.printf("send: heap=%d psram=%d\n", ESP.getFreeHeap(), ESP.getFreePsram());
   String labels = buildLabels();
   WriteRequest req(1);
   TimeSeries ts(1, metricName.c_str(), labels.c_str());
@@ -278,9 +278,10 @@ bool sendMetric() {
   ts.addSample(transport.getTimeMillis(), 1);
   PromClient::SendResult res = client.send(req);
   if (res != PromClient::SendResult::SUCCESS) {
-    Serial.println(client.errmsg);
+    Serial.printf("send failed: %s\n", client.errmsg);
     return false;
   }
+  Serial.println("send OK");
   return true;
 }
 
@@ -298,16 +299,11 @@ bool sendMetric() {
 void showStatus(const String& msg, uint32_t bg) {
   int w = M5Dial.Display.width();
   int h = M5Dial.Display.height();
-  display.startWrite();
-  canvas.deleteSprite();
-  canvas.createSprite(w, h);
-  canvas.fillSprite(bg);
-  canvas.setFont(&fonts::Orbitron_Light_24);
-  canvas.setTextColor(M5Dial.Display.color888(255, 255, 255));
-  canvas.setTextDatum(middle_center);
-  canvas.drawString(msg, w / 2, h / 2);
-  canvas.pushSprite(0, 0);
-  display.endWrite();
+  M5Dial.Display.fillScreen(bg);
+  M5Dial.Display.setFont(&fonts::Orbitron_Light_24);
+  M5Dial.Display.setTextColor(M5Dial.Display.color888(255, 255, 255));
+  M5Dial.Display.setTextDatum(middle_center);
+  M5Dial.Display.drawString(msg, w / 2, h / 2);
 }
 
 void displayCurrentItem() {
@@ -325,51 +321,50 @@ void displayCurrentItem() {
   bool   leaf = isLeafItem(currentIndex);
   String name = back ? "< Back" : (*currentItems)[currentIndex].displayName;
 
-  display.startWrite();
-  canvas.deleteSprite();
-  canvas.createSprite(w, h);
-
-  canvas.fillSprite(M5Dial.Display.color888(255, 255, 255));
-
+  // Resolve which image asset to display
+  const ImageAsset* asset = nullptr;
   if (back) {
-    const ImageAsset* asset = findImage("back.jpg");
-    if (asset) canvas.drawJpg(asset->data, asset->len, 0, -13, w, h, 0, 0, 0.7f, 0.7f, middle_center);
+    asset = findImage("back.jpg");
   } else {
-    // Try item's own image, fall back to top-level category image if not found
     String imgName = (*currentItems)[currentIndex].image;
-    const ImageAsset* asset = imgName.length() > 0 ? findImage(imgName) : nullptr;
+    asset = imgName.length() > 0 ? findImage(imgName) : nullptr;
     if (!asset && !navStack.empty()) {
       imgName = (*navStack[0].items)[navStack[0].selectedIndex].image;
       asset = imgName.length() > 0 ? findImage(imgName) : nullptr;
     }
-    if (asset) canvas.drawJpg(asset->data, asset->len, 0, -13, w, h, 0, 0, 0.7f, 0.7f, middle_center);
+  }
+
+  M5Dial.Display.startWrite();
+  M5Dial.Display.fillScreen(M5Dial.Display.color888(255, 255, 255));
+
+  if (asset) {
+    M5Dial.Display.pushImage(36, 23, 168, 168, asset->data);
   }
 
   // Solid bar at bottom so text is always readable
-  canvas.fillRect(0, h - 47, w, 47, M5Dial.Display.color888(16, 24, 48));
+  M5Dial.Display.fillRect(0, h - 47, w, 47, M5Dial.Display.color888(16, 24, 48));
 
   // Item name — shrink slightly for longer strings so they fit
-  canvas.setFont(&fonts::Orbitron_Light_24);
-  canvas.setTextColor(leaf ? M5Dial.Display.color888(255, 140, 0) : M5Dial.Display.color888(255, 255, 255));
-  canvas.setTextDatum(bottom_center);
-  canvas.setTextSize(name.length() >= 10 ? 0.72f : name.length() >= 8 ? 0.85f : 1.0f);
-  canvas.drawString(name, cx, h - 8);
-  canvas.setTextSize(1.0f);
+  M5Dial.Display.setFont(&fonts::Orbitron_Light_24);
+  M5Dial.Display.setTextColor(leaf ? M5Dial.Display.color888(255, 140, 0) : M5Dial.Display.color888(255, 255, 255));
+  M5Dial.Display.setTextDatum(bottom_center);
+  M5Dial.Display.setTextSize(name.length() >= 10 ? 0.72f : name.length() >= 8 ? 0.85f : 1.0f);
+  M5Dial.Display.drawString(name, cx, h - 8);
+  M5Dial.Display.setTextSize(1.0f);
 
   // Position indicator at top
-  canvas.setFont(&fonts::Font2);
-  canvas.setTextColor(M5Dial.Display.color888(255, 255, 255));
-  canvas.setTextDatum(top_center);
-  canvas.drawString(String(currentIndex + 1) + "/" + String(totalItems()), cx, 8);
+  M5Dial.Display.setFont(&fonts::Font2);
+  M5Dial.Display.setTextColor(M5Dial.Display.color888(255, 255, 255));
+  M5Dial.Display.setTextDatum(top_center);
+  M5Dial.Display.drawString(String(currentIndex + 1) + "/" + String(totalItems()), cx, 8);
 
   // Branch indicator — ">" on right edge means "press to enter"
   if (!back && !leaf) {
-    canvas.setTextDatum(middle_right);
-    canvas.drawString(">", w - 8, cy);
+    M5Dial.Display.setTextDatum(middle_right);
+    M5Dial.Display.drawString(">", w - 8, cy);
   }
 
-  canvas.pushSprite(0, 0);
-  display.endWrite();
+  M5Dial.Display.endWrite();
 }
 
 // ─── Setup & loop ─────────────────────────────────────────────────────────────
@@ -378,7 +373,6 @@ void setup() {
   Serial.begin(115200);
   auto cfg = M5.config();
   M5Dial.begin(cfg, true, false);
-  display.begin();
 
   loadConfig();
 
@@ -419,6 +413,7 @@ void setup() {
     while (true) delay(1000);
   }
 
+  Serial.printf("heap after wifi: %d  maxAlloc: %d\n", ESP.getFreeHeap(), ESP.getMaxAllocHeap());
   showStatus("Connected!", CLR_OK);
   M5Dial.Speaker.tone(8000, 200);
   delay(3000);
@@ -438,8 +433,8 @@ void loop() {
     currentIndex = (currentIndex + dir + totalItems()) % totalItems();
     M5Dial.Encoder.write(0);
     lastEncoderPos = 0;
-    M5Dial.Speaker.tone(8000, 20);
     displayCurrentItem();
+    M5Dial.Speaker.tone(8000, 20);
   }
 
   if (M5Dial.BtnA.wasClicked()) {
