@@ -1,0 +1,5 @@
+config.json
+data/config.json
+config.h
+spiffs.bin
+littlefs.bin
